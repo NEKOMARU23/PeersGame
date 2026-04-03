@@ -31,24 +31,29 @@ jobs:
       - name: Auto Format & Check Style
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
-          # dotnet format を使用して最低限の整形を行う
+          # Assetsが直下にあるPeersGameフォルダを対象に整形
           dotnet format whitespace PeersGame --folder
           Write-Host "Code style checked for PeersGame."
 
       - name: Run Build
         run: |
-          # フォルダ構成が3重にならないよう、Assetsがある直近の親を指定
+          # 【重要】画像から判断：GITHUB_WORKSPACEの直下のPeersGameにAssetsがある想定
           $projectRoot = "$env:GITHUB_WORKSPACE\PeersGame"
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
 
           Write-Host "Project Root: $projectRoot"
+          
+          # パスが正しいか事前にチェック
+          if (-not (Test-Path "$projectRoot\Assets")) {
+              Write-Error "Assets folder NOT FOUND at $projectRoot\Assets. Check repository structure."
+              exit 1
+          }
 
           # ゾンビプロセスの強制終了
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
 
           Write-Host "Launching Unity Build..."
-          # ライセンスエラー対策として -batchmode で実行（サービスは nekos ユーザーで動いている前提）
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
           $exitCode = $proc.ExitCode
@@ -56,7 +61,6 @@ jobs:
 
           if ($exitCode -ne 0) {
               if (Test-Path $logFile) {
-                  # Discordの文字数制限対策で最後30行程度を抽出
                   $logContent = Get-Content $logFile -Tail 30
                   $logContent | Out-File -FilePath "error_summary.txt" -Encoding utf8
               } else {
@@ -70,6 +74,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App_Develop
+          # ビルド成果物の出力先パス（BuildApp.csの設定に合わせて調整してください）
           path: "PeersGame/Builds/App/*"
           retention-days: 7
 
@@ -86,11 +91,10 @@ jobs:
           $errorSummary = "No specific error logs found. Check GitHub Actions console."
           if (Test-Path "error_summary.txt") { 
               $errorSummary = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim()
-              # Discord通知用にバッククォートで囲む（長すぎる場合はカット）
               if ($errorSummary.Length -gt 800) { $errorSummary = $errorSummary.Substring(0, 800) + "..." }
           }
 
-          # Discord APIが受け付ける正しいJSON構造を構築
+          # Discord APIエラー対策：embedを確実に配列として送る
           $embed = @{
             title = "Unity CI Monitor (PeersGame)"
             description = "**$statusTag**"
@@ -102,7 +106,6 @@ jobs:
             )
           }
 
-          # 要素1つの配列としてシリアライズするためにカンマ(,)を使用
           $payload = @{ embeds = ,$embed }
           $json = $payload | ConvertTo-Json -Depth 5 -Compress
 
