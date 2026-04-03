@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Test : MonoBehaviour
 {
-    private float numberHuma = 3.0f;
+    private float _numberHuma = 3.0f;
     void Start()
     {
         
