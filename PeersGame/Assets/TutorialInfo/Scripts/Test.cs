@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Test : MonoBehaviour
 {
-    int Test = 1;
+    int Number = 1;
     void Start()
     {
         
