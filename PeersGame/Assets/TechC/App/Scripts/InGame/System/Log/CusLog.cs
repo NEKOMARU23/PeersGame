@@ -10,7 +10,7 @@ namespace TechC.InGame.Log
     public static class CusLog
     {
         // ビルド時のログ出力制御フラグ
-        public static bool isDebug = true;
+        public static bool IsDebug = true;
 
         #region 基本ログメソッド
 
@@ -20,7 +20,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Log(string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             UnityEngine.Debug.Log($"<color=white>[LOG]</color> {message}");
         }
 
@@ -30,7 +30,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Warning(string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             UnityEngine.Debug.LogWarning($"<color=yellow>[WARNING]</color> {message}");
         }
 
@@ -40,7 +40,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Error(string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
                 UnityEngine.Debug.LogError($"<color=red>[ERROR]</color> {message}");
         }
 
@@ -54,7 +54,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Log(string category, string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             
             string colorCode = LoggerSettings.Instance.GetCategoryColor(category);
             UnityEngine.Debug.Log($"<color={colorCode}>[{category}]</color> {message}");
@@ -66,7 +66,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Warning(string category, string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             
             string colorCode = LoggerSettings.Instance.GetCategoryColor(category);
             UnityEngine.Debug.LogWarning($"<color={colorCode}>[{category}]</color> <color=yellow>[WARNING]</color> {message}");
@@ -78,7 +78,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Error(string category, string message)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             
             string colorCode = LoggerSettings.Instance.GetCategoryColor(category);
             UnityEngine.Debug.LogError($"<color={colorCode}>[{category}]</color> <color=red>[ERROR]</color> {message}");
@@ -94,7 +94,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Log(string message, Object context)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             UnityEngine.Debug.Log($"<color=white>[LOG]</color> {message}", context);
         }
 
@@ -104,7 +104,7 @@ namespace TechC.InGame.Log
         [Conditional("UNITY_EDITOR")]
         public static void Log(string category, string message, Object context)
         {
-            if (!isDebug) return;
+            if (!IsDebug) return;
             
             string colorCode = LoggerSettings.Instance.GetCategoryColor(category);
             UnityEngine.Debug.Log($"<color={colorCode}>[{category}]</color> {message}", context);

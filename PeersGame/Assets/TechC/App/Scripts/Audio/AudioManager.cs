@@ -104,7 +104,7 @@ namespace TechC.Audio
                 return;
             }
 
-            if (bgmData.type != AudioType.BGM)
+            if (bgmData.Type != AudioType.BGM)
             {
                 CusLog.Warning("AudioManager", $"'{bgmName}' はBGMではありません");
                 return;
@@ -136,16 +136,16 @@ namespace TechC.Audio
         /// </summary>
         private void PlayBGMInternal(AudioData bgmData)
         {
-            _bgmSource.clip = bgmData.clip;
-            _bgmSource.volume = bgmData.volume * _bgmVolume * _masterVolume;
-            _bgmSource.pitch = bgmData.pitch;
+            _bgmSource.clip = bgmData.Clip;
+            _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
+            _bgmSource.pitch = bgmData.Pitch;
             _bgmSource.loop = true;
             _bgmSource.Play();
 
-            _currentBGMName = bgmData.name;
+            _currentBGMName = bgmData.Name;
             _isBGMPaused = false;
 
-            CusLog.Log("AudioManager", $"BGM '{bgmData.name}' を再生しました");
+            CusLog.Log("AudioManager", $"BGM '{bgmData.Name}' を再生しました");
         }
 
         /// <summary>
@@ -165,14 +165,14 @@ namespace TechC.Audio
             }
 
             // 新しいBGMを設定
-            _bgmSource.clip = newBGM.clip;
-            _bgmSource.pitch = newBGM.pitch;
+            _bgmSource.clip = newBGM.Clip;
+            _bgmSource.pitch = newBGM.Pitch;
             _bgmSource.Play();
-            _currentBGMName = newBGM.name;
+            _currentBGMName = newBGM.Name;
 
             // フェードイン
             elapsed = 0f;
-            float targetVolume = newBGM.volume * _bgmVolume * _masterVolume;
+            float targetVolume = newBGM.Volume * _bgmVolume * _masterVolume;
             while (elapsed < fadeTime / 2f)
             {
                 elapsed += Time.deltaTime;
@@ -183,7 +183,7 @@ namespace TechC.Audio
             _bgmSource.volume = targetVolume;
             _bgmFadeCoroutine = null;
 
-            CusLog.Log("AudioManager", $"BGM '{newBGM.name}' をフェードイン再生しました");
+            CusLog.Log("AudioManager", $"BGM '{newBGM.Name}' をフェードイン再生しました");
         }
 
         /// <summary>
@@ -296,7 +296,7 @@ namespace TechC.Audio
                 return;
             }
 
-            if (seData.type != AudioType.SE)
+            if (seData.Type != AudioType.SE)
             {
                 CusLog.Warning("AudioManager", $"'{seName}' はSEではありません");
                 return;
@@ -313,14 +313,14 @@ namespace TechC.Audio
             // 利用可能なAudioSourceを取得
             AudioSource seSource = GetAvailableSESource();
 
-            seSource.clip = seData.clip;
-            seSource.volume = seData.volume * _seVolume * _masterVolume;
-            seSource.pitch = pitch != 1f ? pitch : seData.pitch;
-            seSource.loop = loop || seData.loop;
-            seSource.spatialBlend = seData.spatialBlend;
+            seSource.clip = seData.Clip;
+            seSource.volume = seData.Volume * _seVolume * _masterVolume;
+            seSource.pitch = pitch != 1f ? pitch : seData.Pitch;
+            seSource.loop = loop || seData.Loop;
+            seSource.spatialBlend = seData.SpatialBlend;
             seSource.Play();
 
-            CusLog.Log("AudioManager", $"SE '{seData.name}' を再生しました");
+            CusLog.Log("AudioManager", $"SE '{seData.Name}' を再生しました");
         }
 
         /// <summary>
@@ -346,16 +346,16 @@ namespace TechC.Audio
             tempGO.transform.position = position;
             AudioSource tempSource = tempGO.AddComponent<AudioSource>();
 
-            tempSource.clip = seData.clip;
-            tempSource.volume = seData.volume * _seVolume * _masterVolume;
-            tempSource.pitch = pitch != 1f ? pitch : seData.pitch;
+            tempSource.clip = seData.Clip;
+            tempSource.volume = seData.Volume * _seVolume * _masterVolume;
+            tempSource.pitch = pitch != 1f ? pitch : seData.Pitch;
             tempSource.spatialBlend = 1f; // 完全3D
             tempSource.Play();
 
             // 再生終了後に削除
-            Destroy(tempGO, seData.clip.length);
+            Destroy(tempGO, seData.Clip.length);
 
-            CusLog.Log("AudioManager", $"SE '{seData.name}' を3D再生しました");
+            CusLog.Log("AudioManager", $"SE '{seData.Name}' を3D再生しました");
         }
 
         /// <summary>
@@ -472,7 +472,7 @@ namespace TechC.Audio
                 AudioData bgmData = _audioDatabase.GetAudioData(_currentBGMName);
                 if (bgmData != null)
                 {
-                    _bgmSource.volume = bgmData.volume * _bgmVolume * _masterVolume;
+                    _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
                 }
             }
         }

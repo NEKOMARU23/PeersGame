@@ -20,22 +20,22 @@ namespace TechC.Audio
     public class AudioData
     {
         [Header("基本設定")]
-        public string name;
-        public AudioType type;
-        public AudioClip clip;
+        public string Name;
+        public AudioType Type;
+        public AudioClip Clip;
 
         [Header("音量設定")]
         [Range(0f, 1f)]
-        public float volume = 1f;
+        public float Volume = 1f;
 
         [Header("詳細設定")]
-        public bool loop = false;
+        public bool Loop = false;
         
         [Range(-3f, 3f)]
-        public float pitch = 1f;
+        public float Pitch = 1f;
 
         [Range(0f, 1f)]
-        public float spatialBlend = 0f; // 0 = 2D, 1 = 3D
+        public float SpatialBlend = 0f; // 0 = 2D, 1 = 3D
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ namespace TechC.Audio
         /// </summary>
         public AudioData GetAudioData(string audioName)
         {
-            return _audioList.FirstOrDefault(data => data.name == audioName);
+            return _audioList.FirstOrDefault(data => data.Name == audioName);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace TechC.Audio
         /// </summary>
         public List<AudioData> GetAudioDataByType(AudioType type)
         {
-            return _audioList.Where(data => data.type == type).ToList();
+            return _audioList.Where(data => data.Type == type).ToList();
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace TechC.Audio
         /// </summary>
         public bool HasAudioData(string audioName)
         {
-            return _audioList.Any(data => data.name == audioName);
+            return _audioList.Any(data => data.Name == audioName);
         }
 
 #if UNITY_EDITOR
@@ -97,7 +97,7 @@ namespace TechC.Audio
         {
             // 重複する名前をチェック
             var duplicates = _audioList
-                .GroupBy(data => data.name)
+                .GroupBy(data => data.Name)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToList();
@@ -107,8 +107,8 @@ namespace TechC.Audio
 
             // 空のクリップをチェック
             var emptyClips = _audioList
-                .Where(data => data.clip == null)
-                .Select(data => data.name)
+                .Where(data => data.Clip == null)
+                .Select(data => data.Name)
                 .ToList();
 
             if (emptyClips.Count > 0)
