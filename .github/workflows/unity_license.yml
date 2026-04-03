@@ -33,28 +33,36 @@ jobs:
       - name: Code Style Check
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
 
-          Write-Host "Searching for project file..."
+          Write-Host "🔍 プロジェクトファイルを検索中..."
+          Write-Host "📁 ワークスペース: $env:GITHUB_WORKSPACE"
+
           $workspaceFile = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assembly-CSharp.csproj" -Recurse | Select-Object -First 1
           if ($null -eq $workspaceFile) {
-              Write-Host "Assembly-CSharp.csproj not found. Skipping dotnet format."
+              Write-Host "⏭️  Assembly-CSharp.csproj が見つかりません。スキップしています。"
               exit 0
           }
 
-          Write-Host "Found: $($workspaceFile.FullName)"
-          Write-Host "Checking Code Style (Naming Conventions)..."
+          Write-Host "✓ 見つかりました: $($workspaceFile.FullName)"
+          Write-Host "📋 コード命名規則をチェック中..."
+          Write-Host ""
 
-          # stderr も含めて全出力を文字列配列としてキャプチャ（ErrorRecord 対策）
-          $formatOutput = dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1 | ForEach-Object { "$_" }
-          Write-Host "=== DOTNET FORMAT OUTPUT START ==="
-          $formatOutput | Write-Host
-          Write-Host "=== DOTNET FORMAT OUTPUT END ==="
+          # dotnet format を実行
+          Write-Host "▶️  実行: dotnet format style --severity warn --verify-no-changes"
+          & dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" | Tee-Object -Variable formatOutput | Out-Host
           $formatExitCode = $LASTEXITCODE
-          Write-Host "Exit Code: $formatExitCode"
+
+          Write-Host ""
+          Write-Host "=== 実行結果 ==="
+          Write-Host "終了コード: $formatExitCode"
+          Write-Host "出力行数: $($formatOutput.Count)"
+          Write-Host "=== 終了 ==="
+          Write-Host ""
 
           if ($formatExitCode -ne 0) {
-              Write-Host "`n>>> CODE STYLE VIOLATIONS DETECTED <<<"
+              Write-Host "⚠️  >>> 命名規則違反が検出されました <<<"
 
               # 複数パターンで違反を抽出
               $violations = @()
@@ -82,42 +90,43 @@ jobs:
               $violations = @($violations | Select-Object -Unique)
               $violationCount = $violations.Count
 
-              Write-Host "Violations detected: $violationCount"
+              Write-Host "違反件数: $violationCount"
 
               if ($violationCount -gt 0) {
                   $displayViolations = $violations | Select-Object -First 25
-                  $content = "❌ Naming Convention Violations ($violationCount found):`n`n" + ($displayViolations -join "`n")
+                  $content = "❌ 命名規則違反が見つかりました ($violationCount 件):`n`n" + ($displayViolations -join "`n")
                   if ($violationCount -gt 25) {
-                      $content += "`n`n... and $($violationCount - 25) more violations"
+                      $content += "`n`n... ほか $($violationCount - 25) 件の違反"
                   }
               } else {
                   # 万が一パースできない場合は生ログを貼る
                   $rawLines = @($formatOutput | Where-Object { $_.Length -gt 0 })
-                  $content = "Naming convention violations detected:`n`n" + (($rawLines | Select-Object -Last 30) -join "`n")
+                  $content = "命名規則違反が検出されました (詳細は GitHub ログを参照):`n`n" + (($rawLines | Select-Object -Last 30) -join "`n")
               }
 
-              Write-Host "Saving to: $errorSummaryPath"
+              Write-Host "💾 保存先: $errorSummaryPath"
               $content | Out-File -FilePath $errorSummaryPath -Encoding utf8
 
               if (Test-Path $errorSummaryPath) {
-                  Write-Host "✓ error_summary.txt created successfully"
-                  Write-Host "`n=== FILE CONTENT PREVIEW ==="
+                  Write-Host "✓ error_summary.txt を作成しました"
+                  Write-Host "`n=== ファイル内容プレビュー ==="
                   Get-Content $errorSummaryPath | Write-Host
-                  Write-Host "=== END PREVIEW ==="
+                  Write-Host "=== プレビュー終了 ==="
               } else {
-                  Write-Host "✗ FAILED to create error_summary.txt"
+                  Write-Host "✗ error_summary.txt の作成に失敗しました"
               }
 
               exit 1
           }
 
-          Write-Host "`n✓ Code style check passed!"
+          Write-Host "`n✅ コード命名規則チェック: 成功!"
  
       - name: Run Build
         run: |
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
+          Write-Host "🏗️  ビルド処理を開始しています..."
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
-          if ($null -eq $assetsPath) { Write-Error "Assets folder NOT FOUND!"; exit 1 }
+          if ($null -eq $assetsPath) { Write-Error "❌ Assetsフォルダが見つかりません!"; exit 1 }
           $projectRoot = $assetsPath.Parent.FullName
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
@@ -126,13 +135,15 @@ jobs:
 
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           if ($proc.ExitCode -ne 0) {
+              Write-Host "❌ ビルドが失敗しました"
               if (Test-Path $logFile) {
                   Get-Content $logFile -Tail 50 | Out-File -FilePath $errorSummaryPath -Encoding utf8
               } else {
-                  "Unity process crashed instantly." | Out-File -FilePath $errorSummaryPath -Encoding utf8
+                  "Unity プロセスがすぐにクラッシュしました。" | Out-File -FilePath $errorSummaryPath -Encoding utf8
               }
               exit 1
           }
+          Write-Host "✅ ビルド成功!"
  
       - name: Upload App
         if: success()
@@ -149,35 +160,36 @@ jobs:
 
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
-          $statusTag = if ($status -eq "success") { "SUCCESS" } else { "FAILURE" }
+          $statusTag = if ($status -eq "success") { "✅ 成功" } else { "❌ 失敗" }
 
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
-          Write-Host "Discord: Looking for error_summary.txt at: $errorSummaryPath"
+          Write-Host "📤 Discord通知を送信準備中..."
+          Write-Host "　 error_summary.txt を検索中: $errorSummaryPath"
 
-          $summaryContent = "Check GitHub Logs"
+          $summaryContent = "GitHub ログを確認してください"
           if (Test-Path $errorSummaryPath) {
-              Write-Host "Discord: ✓ error_summary.txt found!"
+              Write-Host "　 ✓ error_summary.txt が見つかりました"
               $summaryContent = (Get-Content $errorSummaryPath -Raw -Encoding utf8).Trim()
-              Write-Host "Discord: Content length: $($summaryContent.Length) chars"
+              Write-Host "　 文字数: $($summaryContent.Length)"
               if ($summaryContent.Length -gt 2000) { $summaryContent = $summaryContent.Substring(0, 2000) + "..." }
           } else {
-              Write-Host "Discord: ✗ error_summary.txt NOT found"
+              Write-Host "　 ✗ error_summary.txt が見つかりません"
               $allFiles = Get-ChildItem "$env:GITHUB_WORKSPACE" -Filter "*.txt" -ErrorAction SilentlyContinue
               if ($allFiles) {
-                  Write-Host "Discord: Available .txt files: $($allFiles.Name -join ', ')"
+                  Write-Host "　 利用可能な .txt ファイル: $($allFiles.Name -join ', ')"
               }
           }
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
  
           $payload = @{
               embeds = @(@{
-                  title = "Unity CI Monitor (PeersGame)"
+                  title = "🎮 Unity CI Monitor (PeersGame)"
                   description = "**$statusTag**"
                   color = [int]$color
-                  author = @{ name = "Triggered by: ${{ github.actor }}" }
+                  author = @{ name = "トリガー: ${{ github.actor }}" }
                   fields = @(
-                      @{ name = "Analysis"; value = $finalSummary; inline = $false },
-                      @{ name = "Details"; value = "[View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; inline = $false }
+                      @{ name = "📊 分析結果"; value = $finalSummary; inline = $false },
+                      @{ name = "🔗 詳細"; value = "[ログを確認](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; inline = $false }
                   )
               })
           }
