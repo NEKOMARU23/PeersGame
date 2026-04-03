@@ -34,6 +34,7 @@ jobs:
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $ErrorActionPreference = "Continue"
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
 
           Write-Host "🔍 プロジェクトファイルを検索中..."
@@ -49,9 +50,13 @@ jobs:
           Write-Host "📋 コード命名規則をチェック中..."
           Write-Host ""
 
-          # dotnet format を実行
+          # dotnet format を実行して出力をキャプチャ
           Write-Host "▶️  実行: dotnet format style --severity warn --verify-no-changes"
-          & dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" | Tee-Object -Variable formatOutput | Out-Host
+          $formatOutput = @()
+          & dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1 | ForEach-Object {
+              $formatOutput += $_
+              Write-Host $_
+          }
           $formatExitCode = $LASTEXITCODE
 
           Write-Host ""
@@ -67,24 +72,26 @@ jobs:
               # 複数パターンで違反を抽出
               $violations = @()
 
-              # パターン1: ファイル(行,列) warning IDExxx: メッセージ
-              $violations += @($formatOutput |
-                  Where-Object { $_ -match "warning IDE\d+" } |
-                  ForEach-Object {
-                      if ($_ -match "^([^:]+)\((\d+),(\d+)\):\s*warning (IDE\d+):\s*(.+)$") {
-                          $file = Split-Path $Matches[1] -Leaf
-                          "$file (Line $($Matches[2]), Col $($Matches[3])): [$($Matches[4])] $($Matches[5])"
-                      } elseif ($_ -match "([^\\]+\.cs)\((\d+),\d+\).*?(IDE\d+):\s*(.+)$") {
-                          "$($Matches[1]) (Line $($Matches[2])): [$($Matches[3])] $($Matches[4])"
-                      } else {
-                          $_
-                      }
-                  })
+              # formatOutput から warning を含む行を抽出
+              $warningLines = @($formatOutput | Where-Object { $_ -match "warning IDE\d+" })
 
-              # パターン2: 警告を含むすべての行
-              if ($violations.Count -eq 0) {
-                  $violations += @($formatOutput | Where-Object { $_ -match "warning|error" })
-              }
+              Write-Host "デバッグ: 警告行数 = $($warningLines.Count)"
+
+              $violations = @($warningLines | ForEach-Object {
+                  # パターン: C:\path\file.cs(行,列): warning IDExxx: メッセージ
+                  if ($_ -match "([^:]+\.cs)\((\d+),(\d+)\):\s*warning\s+(IDE\d+):\s*(.+)$") {
+                      $filePath = $Matches[1]
+                      $file = Split-Path $filePath -Leaf
+                      $line = $Matches[2]
+                      $col = $Matches[3]
+                      $code = $Matches[4]
+                      $message = $Matches[5]
+                      "$file (行 $line, 列 $col): [$code] $message"
+                  } else {
+                      # パターンにマッチしない場合はそのまま表示
+                      $_
+                  }
+              })
 
               # 重複除去
               $violations = @($violations | Select-Object -Unique)
