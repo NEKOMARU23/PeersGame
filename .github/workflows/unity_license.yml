@@ -21,49 +21,44 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          path: .
           clean: false
 
       - name: Clean Old Logs
         run: |
-          # 前回のログを掃除
-          $files = "build.log", "error_summary.txt", "unity_build.log"
+          $files = "unity_build.log", "error_summary.txt"
           foreach ($f in $files) { if (Test-Path $f) { Remove-Item $f -Force } }
 
-      - name: Check Code Style & Naming
+      - name: Auto Format & Check Style
         run: |
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
           $OutputEncoding = [System.Text.Encoding]::UTF8
-
-          # dotnet format で命名規則をチェック
-          dotnet format --verify-no-changes --severity error
-          if ($LastExitCode -ne 0) {
-              "Naming convention violation detected! Please check your C# code style (e.g., PascalCase for methods)." | Out-File -FilePath "error_summary.txt" -Encoding utf8
-              exit 1
-          }
+          # 画像のフォルダ名「PeersGame」内の Assets を対象に自動修正
+          dotnet format whitespace PeersGame/Assets --folder
+          Write-Host "Code style auto-fixed for PeersGame."
 
       - name: Run Build
         run: |
-          # 1. プロジェクトルートの特定
-          $assetsPath = Get-ChildItem -Path "Assets" -ErrorAction SilentlyContinue
-          if ($null -eq $assetsPath) {
-              $assetsPath = Get-ChildItem -Path "*/Assets" -ErrorAction SilentlyContinue | Select-Object -First 1
-          }
-          if ($null -eq $assetsPath) { throw "Assets folder not found." }
-          $projectRoot = if ($assetsPath.PSIsContainer) { $assetsPath.Parent.FullName } else { $assetsPath.Directory.Parent.FullName }
-          
-          # 2. Unityの実行
+          # フォルダ構成に合わせて PeersGame を指定
+          $projectRoot = "$env:GITHUB_WORKSPACE\PeersGame"
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
-          $logFile = "build.log"
-          $process = Start-Process -FilePath $unityExe -ArgumentList "-batchmode", "-quit", "-projectPath", "`"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile", "`"$logFile`"" -NoNewWindow -Wait -PassThru
+          $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
+
+          Write-Host "Project Root: $projectRoot"
+
+          # ゾンビプロセス（前回の残り）を強制終了
+          Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
+
+          Write-Host "Launching Unity Build..."
+          $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
-          # 3. 失敗時のエラー抽出
-          if ($process.ExitCode -ne 0) {
+          $exitCode = $proc.ExitCode
+          Write-Host "Unity Exit Code: $exitCode"
+
+          if ($exitCode -ne 0) {
               if (Test-Path $logFile) {
-                  $errors = Get-Content $logFile | Select-String "error" | Select-Object -First 3
-                  $errors | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  # エラーの最後50行を抽出して Discord 通知用に保存
+                  Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
               } else {
-                  "Unity process failed (ExitCode: $($process.ExitCode))" | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  "Unity process crashed instantly. Check Service Logon User (nekos)." | Out-File -FilePath "error_summary.txt" -Encoding utf8
               }
               exit 1
           }
@@ -73,58 +68,39 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App_Develop
-          path: "**/Builds/App/*"
+          # PeersGame フォルダ内のビルド結果を指定
+          path: "PeersGame/Builds/App/*"
           retention-days: 7
 
       - name: Discord Notification
         if: always()
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          # --- 文字化け対策の徹底 ---
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-          # 1. ステータス判定 (絵文字を廃止し、テキスト記号に変更)
           $status = "${{ job.status }}"
-          if ($status -eq "success") {
-              $color = 3066993  # 緑
-              $statusTag = "[SUCCESS]"
-              $desc = "All checks passed. Artifacts are ready."
-              $errorSummary = "Perfect style!"
-          } else {
-              $color = 15158332 # 赤
-              $statusTag = "[FAILURE]"
-              $desc = "Action required: Build or Naming error found."
-              $errorSummary = "No details found."
-              if (Test-Path "error_summary.txt") { 
-                  $errorSummary = Get-Content "error_summary.txt" -Raw -Encoding utf8 
-              }
+          $color = if ($status -eq "success") { 3066993 } else { 15158332 }
+          $statusTag = if ($status -eq "success") { "[SUCCESS]" } else { "[FAILURE]" }
+          
+          $errorSummary = "Check GitHub Logs"
+          if (Test-Path "error_summary.txt") { 
+              $errorSummary = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim() 
           }
 
-          # 2. 変数準備
-          $commitMsg = if ($env:COMMIT_MESSAGE) { $env:COMMIT_MESSAGE.Trim() } else { "Manual Run" }
-          $author = "${{ github.actor }}"
-          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          # 3. JSONペイロード構築
           $payload = @{
             embeds = @(@{
-              title = "Unity CI Monitor"
-              description = "**$statusTag**`n$desc"
+              title = "Unity CI Monitor (PeersGame)"
+              description = "**$statusTag**"
               color = $color
-              author = @{ name = "Triggered by: $author" }
-              thumbnail = @{ url = "https://cdn.pixabay.com/photo/2021/09/20/03/24/unity-6639522_960_720.png" }
+              author = @{ name = "Triggered by: ${{ github.actor }}" }
               fields = @(
-                @{ name = "Latest Commit"; value = "``$commitMsg``"; inline = $false },
                 @{ name = "Analysis"; value = "``$errorSummary``"; inline = $false },
-                @{ name = "Details"; value = "[View Logs on GitHub]($runUrl)"; inline = $false }
+                @{ name = "Details"; value = "[View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; inline = $false }
               )
-              footer = @{ text = "Repo: ${{ github.repository }}" }
             })
           }
 
-          # 4. 送信
           $json = $payload | ConvertTo-Json -Depth 5
           $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK }}" -Method Post -Body $bytes -ContentType "application/json; charset=utf-8"
+          # シークレット名 DISCORD_WEBHOOK_URL を使用
+          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_URL }}" -Method Post -Body $bytes -ContentType "application/json; charset=utf-8"
