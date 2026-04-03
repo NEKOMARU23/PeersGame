@@ -34,7 +34,7 @@ jobs:
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
           Write-Host "Checking Code Style (Naming Conventions)..."
-          dotnet format style "$env:GITHUB_WORKSPACE" --severity warning --verify-no-changes
+          dotnet format style "$env:GITHUB_WORKSPACE" --severity warn --verify-no-changes
           
           if ($LASTEXITCODE -ne 0) {
               "Code Style Violation: Naming conventions (e.g., private fields should be _camelCase) are not followed. Please check Test.cs or other files." | Out-File -FilePath "error_summary.txt" -Encoding utf8
