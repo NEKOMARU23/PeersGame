@@ -31,7 +31,6 @@ jobs:
           foreach ($f in $files) { if (Test-Path $f) { Remove-Item $f -Force } }
 
       - name: Code Style Check
-        continue-on-error: true
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -152,7 +151,6 @@ jobs:
           Write-Host "Code style check passed!"
 
       - name: Run Build
-        continue-on-error: true
         run: |
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
           Write-Host "Starting build..."
