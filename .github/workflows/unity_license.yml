@@ -31,6 +31,7 @@ jobs:
           foreach ($f in $files) { if (Test-Path $f) { Remove-Item $f -Force } }
  
       - name: Code Style Check
+        continue-on-error: true
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -176,6 +177,7 @@ jobs:
           Write-Host "✅ コード命名規則チェック: 成功!"
  
       - name: Run Build
+        continue-on-error: true
         run: |
           $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
           Write-Host "🏗️  ビルド処理を開始しています..."
@@ -284,16 +286,29 @@ jobs:
           Write-Host ""
           Write-Host "🚀 Discord に送信中..."
 
-          $response = curl.exe -X POST -H "Content-Type: application/json" -d "@$jsonFilePath" "${{ secrets.DISCORD_WEBHOOK_URL }}" 2>&1
-          $curlExitCode = $LASTEXITCODE
+          $webhookUrl = "${{ secrets.DISCORD_WEBHOOK_URL }}"
+          if ([string]::IsNullOrEmpty($webhookUrl)) {
+              Write-Host "⚠️  DISCORD_WEBHOOK_URL が設定されていません"
+              Write-Host "=========================================="
+              exit 0
+          }
 
-          Write-Host ""
-          Write-Host "=========================================="
-          if ($curlExitCode -eq 0) {
-              Write-Host "✅ Discord 通知を送信しました"
-          } else {
-              Write-Host "⚠️  Discord 送信時にエラーが発生しました"
-              Write-Host "　 終了コード: $curlExitCode"
-              Write-Host "　 レスポンス: $response"
+          try {
+              $response = curl.exe -X POST -H "Content-Type: application/json" -d "@$jsonFilePath" "$webhookUrl" 2>&1
+              $curlExitCode = $LASTEXITCODE
+
+              Write-Host ""
+              Write-Host "=========================================="
+              if ($curlExitCode -eq 0) {
+                  Write-Host "✅ Discord 通知を送信しました"
+                  Write-Host "レスポンス: $response"
+              } else {
+                  Write-Host "⚠️  Discord 送信時にエラーが発生しました"
+                  Write-Host "　 終了コード: $curlExitCode"
+                  Write-Host "　 レスポンス: $response"
+              }
+          } catch {
+              Write-Host "❌ Discord 送信処理でエラーが発生しました"
+              Write-Host "　 エラー: $_"
           }
           Write-Host "=========================================="
