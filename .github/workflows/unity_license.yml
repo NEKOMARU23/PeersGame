@@ -31,23 +31,24 @@ jobs:
       - name: Auto Format & Check Style
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
-          # 画像のフォルダ名「PeersGame」内の Assets を対象に自動修正
-          dotnet format whitespace PeersGame/Assets --folder
-          Write-Host "Code style auto-fixed for PeersGame."
+          # dotnet format を使用して最低限の整形を行う
+          dotnet format whitespace PeersGame --folder
+          Write-Host "Code style checked for PeersGame."
 
       - name: Run Build
         run: |
-          # フォルダ構成に合わせて PeersGame を指定
+          # フォルダ構成が3重にならないよう、Assetsがある直近の親を指定
           $projectRoot = "$env:GITHUB_WORKSPACE\PeersGame"
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
 
           Write-Host "Project Root: $projectRoot"
 
-          # ゾンビプロセス（前回の残り）を強制終了
+          # ゾンビプロセスの強制終了
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
 
           Write-Host "Launching Unity Build..."
+          # ライセンスエラー対策として -batchmode で実行（サービスは nekos ユーザーで動いている前提）
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
           $exitCode = $proc.ExitCode
@@ -55,8 +56,9 @@ jobs:
 
           if ($exitCode -ne 0) {
               if (Test-Path $logFile) {
-                  # エラーの最後50行を抽出して Discord 通知用に保存
-                  Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  # Discordの文字数制限対策で最後30行程度を抽出
+                  $logContent = Get-Content $logFile -Tail 30
+                  $logContent | Out-File -FilePath "error_summary.txt" -Encoding utf8
               } else {
                   "Unity process crashed instantly. Check Service Logon User (nekos)." | Out-File -FilePath "error_summary.txt" -Encoding utf8
               }
@@ -68,7 +70,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App_Develop
-          # PeersGame フォルダ内のビルド結果を指定
           path: "PeersGame/Builds/App/*"
           retention-days: 7
 
@@ -80,27 +81,30 @@ jobs:
 
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
-          $statusTag = if ($status -eq "success") { "[SUCCESS]" } else { "[FAILURE]" }
+          $statusTag = if ($status -eq "success") { "✅ SUCCESS" } else { "❌ FAILURE" }
           
-          $errorSummary = "Check GitHub Logs"
+          $errorSummary = "No specific error logs found. Check GitHub Actions console."
           if (Test-Path "error_summary.txt") { 
-              $errorSummary = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim() 
+              $errorSummary = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim()
+              # Discord通知用にバッククォートで囲む（長すぎる場合はカット）
+              if ($errorSummary.Length -gt 800) { $errorSummary = $errorSummary.Substring(0, 800) + "..." }
           }
 
-          $payload = @{
-            embeds = @(@{
-              title = "Unity CI Monitor (PeersGame)"
-              description = "**$statusTag**"
-              color = $color
-              author = @{ name = "Triggered by: ${{ github.actor }}" }
-              fields = @(
-                @{ name = "Analysis"; value = "``$errorSummary``"; inline = $false },
-                @{ name = "Details"; value = "[View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; inline = $false }
-              )
-            })
+          # Discord APIが受け付ける正しいJSON構造を構築
+          $embed = @{
+            title = "Unity CI Monitor (PeersGame)"
+            description = "**$statusTag**"
+            color = [int]$color
+            author = @{ name = "Triggered by: ${{ github.actor }}" }
+            fields = @(
+              @{ name = "Analysis"; value = "```$errorSummary```"; inline = $false },
+              @{ name = "Details"; value = "[View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; inline = $false }
+            )
           }
 
-          $json = $payload | ConvertTo-Json -Depth 5
+          # 要素1つの配列としてシリアライズするためにカンマ(,)を使用
+          $payload = @{ embeds = ,$embed }
+          $json = $payload | ConvertTo-Json -Depth 5 -Compress
+
           $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-          # シークレット名 DISCORD_WEBHOOK_URL を使用
           Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_URL }}" -Method Post -Body $bytes -ContentType "application/json; charset=utf-8"
