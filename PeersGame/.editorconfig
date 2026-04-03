@@ -1,0 +1,77 @@
+# 全般的な設定
+root = true
+
+[*.{cs,csx}]
+
+# -----------------------------------------------------------------------
+# 命名規則の設定 (Naming Styles)
+# -----------------------------------------------------------------------
+
+# 1. PascalCase (プレフィックスなし)
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# 2. I + PascalCase (インターフェース用)
+dotnet_naming_style.interface_style.capitalization = pascal_case
+dotnet_naming_style.interface_style.required_prefix = I
+
+# 3. _ + camelCase (privateフィールド用)
+dotnet_naming_style.private_field_style.capitalization = camel_case
+dotnet_naming_style.private_field_style.required_prefix = _
+
+# 4. camelCase (プレフィックスなし)
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+# 5. T + PascalCase (型パラメーター用)
+dotnet_naming_style.type_parameter_style.capitalization = pascal_case
+dotnet_naming_style.type_parameter_style.required_prefix = T
+
+# -----------------------------------------------------------------------
+# 各要素へのルール適用 (Naming Rules)
+# -----------------------------------------------------------------------
+
+# クラス、構造体、列挙型、列挙値、名前空間 -> PascalCase
+dotnet_naming_rule.types_and_namespaces_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.types_and_namespaces_should_be_pascal_case.symbols = types_and_namespaces
+dotnet_naming_rule.types_and_namespaces_should_be_pascal_case.style = pascal_case_style
+
+dotnet_naming_symbols.types_and_namespaces.applicable_kinds = class, struct, enum, namespace
+dotnet_naming_symbols.types_and_namespaces.applicable_accessibilities = *
+
+# インターフェース -> I + PascalCase
+dotnet_naming_rule.interfaces_should_be_i_pascal_case.severity = suggestion
+dotnet_naming_rule.interfaces_should_be_i_pascal_case.symbols = interface_symbols
+dotnet_naming_rule.interfaces_should_be_i_pascal_case.style = interface_style
+
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbols.applicable_accessibilities = *
+
+# メソッド、プロパティ、イベント、publicフィールド、定数 -> PascalCase
+dotnet_naming_rule.members_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.members_should_be_pascal_case.symbols = member_symbols
+dotnet_naming_rule.members_should_be_pascal_case.style = pascal_case_style
+
+dotnet_naming_symbols.member_symbols.applicable_kinds = method, property, event, field
+dotnet_naming_symbols.member_symbols.applicable_accessibilities = public, internal, protected, protected_internal
+dotnet_naming_symbols.member_symbols.required_modifiers = readonly, static # 定数(const)やstatic readonlyを含む
+
+# private/protectedフィールド -> _ + camelCase
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.symbols = private_field_symbols
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.style = private_field_style
+
+dotnet_naming_symbols.private_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbols.applicable_accessibilities = private, protected
+
+# ローカル変数、パラメーター -> camelCase
+dotnet_naming_rule.locals_and_parameters_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.locals_and_parameters_should_be_camel_case.symbols = local_and_parameter_symbols
+dotnet_naming_rule.locals_and_parameters_should_be_camel_case.style = camel_case_style
+
+dotnet_naming_symbols.local_and_parameter_symbols.applicable_kinds = local, parameter
+
+# 型パラメーター -> T + PascalCase
+dotnet_naming_rule.type_parameters_should_be_t_pascal_case.severity = suggestion
+dotnet_naming_rule.type_parameters_should_be_t_pascal_case.symbols = type_parameter_symbols
+dotnet_naming_rule.type_parameters_should_be_t_pascal_case.style = type_parameter_style
+
+dotnet_naming_symbols.type_parameter_symbols.applicable_kinds = type_parameter
