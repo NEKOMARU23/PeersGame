@@ -76,7 +76,7 @@ jobs:
       - name: Discord Notification
         if: always()
         run: |
-          # 内部処理と出力のエンコーディングをUTF8に強制
+          # PowerShell内部と出力のエンコーディングを明示的にUTF8に設定
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -90,10 +90,10 @@ jobs:
               if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
           }
           
-          # バッククォートをエスケープ文字ではなく純粋な文字列として結合
+          # バッククォートを文字列として連結
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
 
-          # ペイロードをハッシュテーブルで構築
+          # JSONペイロードをハッシュテーブルで構築
           $payload = @{
               embeds = @(@{
                   title = "Unity CI Monitor (PeersGame)"
@@ -107,7 +107,7 @@ jobs:
               })
           }
 
-          # 重要：JSONをUTF8のバイト列に変換して送信することで文字化けを阻止
+          # 【重要】JSONをUTF8のバイト列に変換してから送信することで文字化けを阻止
           $json = $payload | ConvertTo-Json -Depth 5 -Compress
           $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
 
