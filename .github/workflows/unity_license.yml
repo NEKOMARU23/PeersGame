@@ -233,11 +233,14 @@ jobs:
               exit 0
           }
 
-          $response = curl.exe -X POST -H "Content-Type: application/json" -d "@$jsonFilePath" "$webhookUrl" 2>&1
+          $response = & curl.exe -s -X POST -H "Content-Type: application/json" -d "@$jsonFilePath" "$webhookUrl"
           $curlExitCode = $LASTEXITCODE
 
           if ($curlExitCode -eq 0) {
               Write-Host "Discord notification sent successfully"
+              Write-Host "Response: $response"
           } else {
-              Write-Host "Failed to send Discord notification: $response"
+              Write-Host "Failed to send Discord notification"
+              Write-Host "Exit Code: $curlExitCode"
+              Write-Host "Response: $response"
           }
