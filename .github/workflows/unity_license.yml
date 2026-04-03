@@ -43,14 +43,17 @@ jobs:
 
       - name: Run Build
         run: |
+          # Assetsフォルダを基準にプロジェクトルートを自動特定
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
           if ($null -eq $assetsPath) { Write-Error "Assets folder NOT FOUND!"; exit 1 }
           $projectRoot = $assetsPath.Parent.FullName
+          
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
 
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
 
+          Write-Host "Launching Unity Build..."
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
           if ($proc.ExitCode -ne 0) {
@@ -73,8 +76,10 @@ jobs:
       - name: Discord Notification
         if: always()
         run: |
+          # 内部処理と出力のエンコーディングをUTF8に強制
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
           $statusTag = if ($status -eq "success") { "✅ SUCCESS" } else { "❌ FAILURE" }
@@ -85,8 +90,10 @@ jobs:
               if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
           }
           
+          # バッククォートをエスケープ文字ではなく純粋な文字列として結合
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
 
+          # ペイロードをハッシュテーブルで構築
           $payload = @{
               embeds = @(@{
                   title = "Unity CI Monitor (PeersGame)"
@@ -100,6 +107,11 @@ jobs:
               })
           }
 
+          # 重要：JSONをUTF8のバイト列に変換して送信することで文字化けを阻止
           $json = $payload | ConvertTo-Json -Depth 5 -Compress
           $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_URL }}" -Method Post -Body $bytes -ContentType "application/json; charset=utf-8"
+
+          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_URL }}" `
+                            -Method Post `
+                            -Body $bytes `
+                            -ContentType "application/json; charset=utf-8"
