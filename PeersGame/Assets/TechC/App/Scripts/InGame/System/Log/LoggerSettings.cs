@@ -10,13 +10,13 @@ namespace TechC.InGame.Log
     [System.Serializable]
     public class LogCategory
     {
-        public string CategoryName;
+        public string categoryName;
         public Color CategoryColor = Color.white;
         public bool IsEnabled = true;  // カテゴリー別のオン/オフフラグ
 
         public LogCategory(string name, Color color, bool enabled = true)
         {
-            this.CategoryName = name;
+            this.categoryName = name;
             this.CategoryColor = color;
             this.IsEnabled = enabled;
         }
@@ -108,7 +108,7 @@ namespace TechC.InGame.Log
         /// </summary>
         public string GetCategoryColor(string categoryName)
         {
-            var category = _categories.FirstOrDefault(c => c.CategoryName == categoryName);
+            var category = _categories.FirstOrDefault(c => c.categoryName == categoryName);
             if (category != null)
             {
                 return ColorToHex(category.CategoryColor);
@@ -123,7 +123,7 @@ namespace TechC.InGame.Log
         /// </summary>
         public bool IsCategoryEnabled(string categoryName)
         {
-            var category = _categories.FirstOrDefault(c => c.CategoryName == categoryName);
+            var category = _categories.FirstOrDefault(c => c.categoryName == categoryName);
             return category?.IsEnabled ?? true; // 未登録のカテゴリーはデフォルトで有効
         }
 
@@ -132,7 +132,7 @@ namespace TechC.InGame.Log
         /// </summary>
         public void SetCategoryEnabled(string categoryName, bool enabled)
         {
-            var category = _categories.FirstOrDefault(c => c.CategoryName == categoryName);
+            var category = _categories.FirstOrDefault(c => c.categoryName == categoryName);
             if (category != null)
             {
                 category.IsEnabled = enabled;
@@ -147,7 +147,7 @@ namespace TechC.InGame.Log
         /// </summary>
         public void AddCategory(string categoryName, Color color)
         {
-            if (!_categories.Any(c => c.CategoryName == categoryName))
+            if (!_categories.Any(c => c.categoryName == categoryName))
                 _categories.Add(new LogCategory(categoryName, color));
         }
 
@@ -156,7 +156,7 @@ namespace TechC.InGame.Log
         /// </summary>
         public void RemoveCategory(string categoryName)
         {
-            _categories.RemoveAll(c => c.CategoryName == categoryName);
+            _categories.RemoveAll(c => c.categoryName == categoryName);
         }
 
         /// <summary>
