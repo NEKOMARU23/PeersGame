@@ -43,27 +43,53 @@ jobs:
           Write-Host "Found: $($workspaceFile.FullName)"
           Write-Host "Checking Code Style (Naming Conventions)..."
 
-          # 出力を変数にキャプチャしつつ画面にも表示
-          $formatOutput = dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1
+          # stderr も含めて全出力を文字列配列としてキャプチャ（ErrorRecord 対策）
+          $formatOutput = dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1 | ForEach-Object { "$_" }
           $formatOutput | Write-Host
           $formatExitCode = $LASTEXITCODE
 
           if ($formatExitCode -ne 0) {
-              # "warning IDE1006:" を含む行だけ抽出してファイル名・行番号を整形
-              $violations = $formatOutput |
+              # 複数パターンで違反を抽出
+              $violations = @()
+
+              # パターン1: ファイル(行,列) warning IDExxx: メッセージ
+              $violations += @($formatOutput |
                   Where-Object { $_ -match "warning IDE\d+" } |
                   ForEach-Object {
-                      if ($_ -match "([^\\]+\.cs)\((\d+),\d+\).*?:\s*warning (IDE\d+):\s*(.+)$") {
+                      if ($_ -match "^([^:]+)\((\d+),(\d+)\):\s*warning (IDE\d+):\s*(.+)$") {
+                          $file = Split-Path $Matches[1] -Leaf
+                          "$file (Line $($Matches[2]), Col $($Matches[3])): [$($Matches[4])] $($Matches[5])"
+                      } elseif ($_ -match "([^\\]+\.cs)\((\d+),\d+\).*?(IDE\d+):\s*(.+)$") {
                           "$($Matches[1]) (Line $($Matches[2])): [$($Matches[3])] $($Matches[4])"
-                      } else { $_ }
-                  }
+                      } else {
+                          $_
+                      }
+                  })
 
-              if ($violations.Count -gt 0) {
-                  $content = "Naming Convention Violations:`n" + (($violations | Select-Object -First 20) -join "`n")
-              } else {
-                  $content = "Naming convention violation detected. See GitHub Actions logs for details."
+              # パターン2: 警告を含むすべての行
+              if ($violations.Count -eq 0) {
+                  $violations += @($formatOutput | Where-Object { $_ -match "warning|error" })
               }
+
+              # 重複除去
+              $violations = @($violations | Select-Object -Unique)
+              $violationCount = $violations.Count
+
+              if ($violationCount -gt 0) {
+                  $displayViolations = $violations | Select-Object -First 25
+                  $content = "❌ Naming Convention Violations ($violationCount found):`n`n" + ($displayViolations -join "`n")
+                  if ($violationCount -gt 25) {
+                      $content += "`n`n... and $($violationCount - 25) more violations (see logs)"
+                  }
+              } else {
+                  # 万が一パースできない場合は生ログを貼る
+                  $rawLines = @($formatOutput | Where-Object { $_.Length -gt 0 })
+                  $content = "Naming convention violation detected (unable to parse details):`n`n" + (($rawLines | Select-Object -Last 30) -join "`n")
+              }
+
               $content | Out-File -FilePath "error_summary.txt" -Encoding utf8
+              Write-Host "`n=== VIOLATION SUMMARY ==="
+              Write-Host $content
               exit 1
           }
  
