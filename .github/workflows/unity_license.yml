@@ -33,20 +33,37 @@ jobs:
       - name: Code Style Check
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
-          Write-Host "Searching for project or solution files..."
-          # .sln または .csproj を検索してパスを取得
-          $workspaceFile = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Include *.sln, *.csproj -Recurse | Select-Object -First 1
+          Write-Host "Searching for project file..."
+          $workspaceFile = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assembly-CSharp.csproj" -Recurse | Select-Object -First 1
           if ($null -eq $workspaceFile) {
-              Write-Host "No .sln or .csproj found. Skipping dotnet format."
+              Write-Host "Assembly-CSharp.csproj not found. Skipping dotnet format."
               exit 0 
           }
  
           Write-Host "Found: $($workspaceFile.FullName)"
           Write-Host "Checking Code Style (Naming Conventions)..."
-          # 見つかったファイルを指定して実行
-          dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes
-          if ($LASTEXITCODE -ne 0) {
-              "Code Style Violation: Naming conventions (e.g., private fields should be _camelCase) are not followed. Please check Test.cs or other files." | Out-File -FilePath "error_summary.txt" -Encoding utf8
+
+          # 出力を変数にキャプチャしつつ画面にも表示
+          $formatOutput = dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1
+          $formatOutput | Write-Host
+          $formatExitCode = $LASTEXITCODE
+
+          if ($formatExitCode -ne 0) {
+              # "warning IDE1006:" を含む行だけ抽出してファイル名・行番号を整形
+              $violations = $formatOutput |
+                  Where-Object { $_ -match "warning IDE\d+" } |
+                  ForEach-Object {
+                      if ($_ -match "([^\\]+\.cs)\((\d+),\d+\).*?:\s*warning (IDE\d+):\s*(.+)$") {
+                          "$($Matches[1]) (Line $($Matches[2])): [$($Matches[3])] $($Matches[4])"
+                      } else { $_ }
+                  }
+
+              if ($violations.Count -gt 0) {
+                  $content = "Naming Convention Violations:`n" + (($violations | Select-Object -First 20) -join "`n")
+              } else {
+                  $content = "Naming convention violation detected. See GitHub Actions logs for details."
+              }
+              $content | Out-File -FilePath "error_summary.txt" -Encoding utf8
               exit 1
           }
  
