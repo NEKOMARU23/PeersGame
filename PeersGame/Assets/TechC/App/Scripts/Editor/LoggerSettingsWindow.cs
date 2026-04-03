@@ -149,12 +149,12 @@ namespace TechC.Editor
                 EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
                 
                 // カテゴリ名
-                EditorGUILayout.LabelField(category.categoryName, GUILayout.Width(CategoryNameWidth));
+                EditorGUILayout.LabelField(category.CategoryName, GUILayout.Width(CategoryNameWidth));
                 
                 // プレビュー
                 GUIStyle previewStyle = new GUIStyle(EditorStyles.label);
                 previewStyle.normal.textColor = category.CategoryColor;
-                EditorGUILayout.LabelField($"[{category.categoryName}] Sample", previewStyle, GUILayout.Width(PreviewWidth));
+                EditorGUILayout.LabelField($"[{category.CategoryName}] Sample", previewStyle, GUILayout.Width(PreviewWidth));
                 
                 // 色変更
                 Color newColor = EditorGUILayout.ColorField(GUIContent.none, category.CategoryColor, false, false, false, GUILayout.Width(ColorFieldWidth));
@@ -170,7 +170,7 @@ namespace TechC.Editor
                 if (GUILayout.Button("×", GUILayout.Width(DeleteButtonWidth)))
                 {
                     if (EditorUtility.DisplayDialog("確認", 
-                        $"カテゴリー '{category.categoryName}' を削除しますか?", 
+                        $"カテゴリー '{category.CategoryName}' を削除しますか?", 
                         "削除", "キャンセル"))
                     {
                         categoriesToRemove.Add(category);
@@ -183,7 +183,7 @@ namespace TechC.Editor
             // 削除処理
             foreach (var category in categoriesToRemove)
             {
-                _settings.RemoveCategory(category.categoryName);
+                _settings.RemoveCategory(category.CategoryName);
                 EditorUtility.SetDirty(_settings);
             }
             
