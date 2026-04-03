@@ -30,7 +30,7 @@ jobs:
 
       - name: Run Build
         run: |
-          # Assetsフォルダを基準にプロジェクトルートを自動特定（階層ズレ対策）
+          # Assetsフォルダを基準にプロジェクトルートを自動特定
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
           if ($null -eq $assetsPath) { 
               Write-Error "Assets folder NOT FOUND!"
@@ -43,7 +43,7 @@ jobs:
 
           Write-Host "Detected Project Root: $projectRoot"
 
-          # 前回の残骸プロセスを掃除
+          # ゾンビプロセスの掃除
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
 
           Write-Host "Launching Unity Build..."
@@ -82,10 +82,10 @@ jobs:
               if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
           }
           
-          # JSONが壊れないようコードブロックで包む
-          $finalSummary = "```" + $summaryContent + "```"
+          # シングルクォートで囲むことで、バッククォートを純粋な文字列として扱います
+          $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
 
-          # ハッシュテーブルでペイロードを作成（これがYAMLと最も相性が良い）
+          # ハッシュテーブルで構造化（ConvertTo-Json が記号を安全に処理してくれます）
           $payload = @{
               embeds = @(@{
                   title = "Unity CI Monitor (PeersGame)"
@@ -99,7 +99,6 @@ jobs:
               })
           }
 
-          # JSONに変換して送信
           $json = $payload | ConvertTo-Json -Depth 5 -Compress
           $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
           Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_URL }}" -Method Post -Body $bytes -ContentType "application/json; charset=utf-8"
