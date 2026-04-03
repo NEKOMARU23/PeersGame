@@ -68,6 +68,17 @@ jobs:
 
           if ($formatExitCode -ne 0) {
               Write-Host "⚠️  >>> 命名規則違反が検出されました <<<"
+              Write-Host ""
+
+              # デバッグ: formatOutput の全内容を表示
+              Write-Host "=== DEBUG: formatOutput の内容 ==="
+              Write-Host "総行数: $($formatOutput.Count)"
+              for ($i = 0; $i -lt $formatOutput.Count; $i++) {
+                  $line = $formatOutput[$i]
+                  Write-Host "[$i] ($($line.Length) 文字): $line"
+              }
+              Write-Host "=== END DEBUG ==="
+              Write-Host ""
 
               # 複数パターンで違反を抽出
               $violations = @()
@@ -75,21 +86,33 @@ jobs:
               # formatOutput から warning を含む行を抽出
               $warningLines = @($formatOutput | Where-Object { $_ -match "warning IDE\d+" })
 
-              Write-Host "デバッグ: 警告行数 = $($warningLines.Count)"
+              Write-Host "🔎 警告行の検索: $($warningLines.Count) 件見つかりました"
+              Write-Host ""
+
+              if ($warningLines.Count -gt 0) {
+                  Write-Host "警告行の詳細:"
+                  foreach ($wl in $warningLines) {
+                      Write-Host "  > $wl"
+                  }
+                  Write-Host ""
+              }
 
               $violations = @($warningLines | ForEach-Object {
+                  $currentLine = $_
                   # パターン: C:\path\file.cs(行,列): warning IDExxx: メッセージ
-                  if ($_ -match "([^:]+\.cs)\((\d+),(\d+)\):\s*warning\s+(IDE\d+):\s*(.+)$") {
+                  if ($currentLine -match "([^:]+\.cs)\((\d+),(\d+)\):\s*warning\s+(IDE\d+):\s*(.+)$") {
                       $filePath = $Matches[1]
                       $file = Split-Path $filePath -Leaf
                       $line = $Matches[2]
                       $col = $Matches[3]
                       $code = $Matches[4]
                       $message = $Matches[5]
-                      "$file (行 $line, 列 $col): [$code] $message"
+                      $result = "$file (行 $line, 列 $col): [$code] $message"
+                      Write-Host "✓ マッチ: $result"
+                      $result
                   } else {
-                      # パターンにマッチしない場合はそのまま表示
-                      $_
+                      Write-Host "✗ マッチ失敗: $currentLine"
+                      $currentLine
                   }
               })
 
@@ -97,6 +120,7 @@ jobs:
               $violations = @($violations | Select-Object -Unique)
               $violationCount = $violations.Count
 
+              Write-Host ""
               Write-Host "📊 違反件数: $violationCount"
               Write-Host ""
 
@@ -115,26 +139,37 @@ jobs:
               }
 
               Write-Host ""
-              Write-Host "💾 ファイルを保存中..."
-              Write-Host "　 保存先: $errorSummaryPath"
+              Write-Host "=== ファイル保存処理 ==="
+              Write-Host "保存先: $errorSummaryPath"
+              Write-Host "内容サイズ: $($content.Length) 文字"
+              Write-Host ""
 
-              # UTF-8 BOM なし で保存
-              $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-              [System.IO.File]::WriteAllText($errorSummaryPath, $content, $utf8NoBom)
+              try {
+                  # UTF-8 BOM なし で保存
+                  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+                  [System.IO.File]::WriteAllText($errorSummaryPath, $content, $utf8NoBom)
+                  Write-Host "✓ WriteAllText 成功"
 
-              Start-Sleep -Milliseconds 500
+                  Start-Sleep -Milliseconds 500
 
-              if (Test-Path $errorSummaryPath) {
-                  $fileSize = (Get-Item $errorSummaryPath).Length
-                  Write-Host "✓ ファイルを作成しました (サイズ: $fileSize bytes)"
-                  Write-Host ""
-                  Write-Host "=== ファイル内容プレビュー ==="
-                  Get-Content $errorSummaryPath -Encoding UTF8 | Write-Host
-                  Write-Host "=== プレビュー終了 ==="
-              } else {
-                  Write-Host "✗ ファイル作成に失敗しました"
+                  if (Test-Path $errorSummaryPath) {
+                      $fileSize = (Get-Item $errorSummaryPath).Length
+                      Write-Host "✓ ファイルを作成しました (サイズ: $fileSize bytes)"
+                      Write-Host ""
+                      Write-Host "=== ファイル内容プレビュー ==="
+                      $fileContent = Get-Content $errorSummaryPath -Raw -Encoding UTF8
+                      Write-Host $fileContent
+                      Write-Host "=== プレビュー終了 ==="
+                  } else {
+                      Write-Host "✗ Test-Path で確認失敗: $errorSummaryPath"
+                  }
+              } catch {
+                  Write-Host "✗ ファイル保存エラー: $_"
+                  Write-Host "  例外タイプ: $($_.Exception.GetType().FullName)"
               }
 
+              Write-Host ""
+              Write-Host "=== 終了:exit 1 ==="
               exit 1
           }
 
