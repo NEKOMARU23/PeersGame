@@ -9,37 +9,37 @@ namespace TechC.Core.Scene
     /// </summary>
     public class BootstrapLoader
     {
-        private const string MANAGER_SCENE_NAME = "Manager";
-        private static bool isBootstrapped = false;
+        private const string ManagerSceneName = "Manager";
+        private static bool _isBootstrapped = false;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Initialize()
         {
-            if (isBootstrapped)
+            if (_isBootstrapped)
             {
                 Debug.Log("[Bootstrap] 既に初期化済みです");
                 return;
             }
             
-            isBootstrapped = true;
+            _isBootstrapped = true;
             
-            bool managerSceneLoaded = IsSceneLoaded(MANAGER_SCENE_NAME);
+            bool managerSceneLoaded = IsSceneLoaded(ManagerSceneName);
             
             if (managerSceneLoaded)
             {
-                Debug.Log($"[Bootstrap] {MANAGER_SCENE_NAME}シーンは既にロードされています");
+                Debug.Log($"[Bootstrap] {ManagerSceneName}シーンは既にロードされています");
                 return;
             }
             
             try
             {
-                SceneManager.LoadScene(MANAGER_SCENE_NAME, LoadSceneMode.Additive);
-                Debug.Log($"[Bootstrap] {MANAGER_SCENE_NAME}シーンをロードしました");
+                SceneManager.LoadScene(ManagerSceneName, LoadSceneMode.Additive);
+                Debug.Log($"[Bootstrap] {ManagerSceneName}シーンをロードしました");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[Bootstrap] {MANAGER_SCENE_NAME}シーンのロードに失敗しました: {e.Message}");
-                Debug.LogError($"[Bootstrap] Build Settingsに'{MANAGER_SCENE_NAME}'シーンが追加されているか確認してください");
+                Debug.LogError($"[Bootstrap] {ManagerSceneName}シーンのロードに失敗しました: {e.Message}");
+                Debug.LogError($"[Bootstrap] Build Settingsに'{ManagerSceneName}'シーンが追加されているか確認してください");
             }
         }
         
