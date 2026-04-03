@@ -33,22 +33,29 @@ jobs:
       - name: Code Style Check
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
+          $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
+
           Write-Host "Searching for project file..."
           $workspaceFile = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assembly-CSharp.csproj" -Recurse | Select-Object -First 1
           if ($null -eq $workspaceFile) {
               Write-Host "Assembly-CSharp.csproj not found. Skipping dotnet format."
-              exit 0 
+              exit 0
           }
- 
+
           Write-Host "Found: $($workspaceFile.FullName)"
           Write-Host "Checking Code Style (Naming Conventions)..."
 
           # stderr も含めて全出力を文字列配列としてキャプチャ（ErrorRecord 対策）
           $formatOutput = dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes --exclude "Assets\TutorialInfo" 2>&1 | ForEach-Object { "$_" }
+          Write-Host "=== DOTNET FORMAT OUTPUT START ==="
           $formatOutput | Write-Host
+          Write-Host "=== DOTNET FORMAT OUTPUT END ==="
           $formatExitCode = $LASTEXITCODE
+          Write-Host "Exit Code: $formatExitCode"
 
           if ($formatExitCode -ne 0) {
+              Write-Host "`n>>> CODE STYLE VIOLATIONS DETECTED <<<"
+
               # 複数パターンで違反を抽出
               $violations = @()
 
@@ -75,40 +82,54 @@ jobs:
               $violations = @($violations | Select-Object -Unique)
               $violationCount = $violations.Count
 
+              Write-Host "Violations detected: $violationCount"
+
               if ($violationCount -gt 0) {
                   $displayViolations = $violations | Select-Object -First 25
                   $content = "❌ Naming Convention Violations ($violationCount found):`n`n" + ($displayViolations -join "`n")
                   if ($violationCount -gt 25) {
-                      $content += "`n`n... and $($violationCount - 25) more violations (see logs)"
+                      $content += "`n`n... and $($violationCount - 25) more violations"
                   }
               } else {
                   # 万が一パースできない場合は生ログを貼る
                   $rawLines = @($formatOutput | Where-Object { $_.Length -gt 0 })
-                  $content = "Naming convention violation detected (unable to parse details):`n`n" + (($rawLines | Select-Object -Last 30) -join "`n")
+                  $content = "Naming convention violations detected:`n`n" + (($rawLines | Select-Object -Last 30) -join "`n")
               }
 
-              $content | Out-File -FilePath "error_summary.txt" -Encoding utf8
-              Write-Host "`n=== VIOLATION SUMMARY ==="
-              Write-Host $content
+              Write-Host "Saving to: $errorSummaryPath"
+              $content | Out-File -FilePath $errorSummaryPath -Encoding utf8
+
+              if (Test-Path $errorSummaryPath) {
+                  Write-Host "✓ error_summary.txt created successfully"
+                  Write-Host "`n=== FILE CONTENT PREVIEW ==="
+                  Get-Content $errorSummaryPath | Write-Host
+                  Write-Host "=== END PREVIEW ==="
+              } else {
+                  Write-Host "✗ FAILED to create error_summary.txt"
+              }
+
               exit 1
           }
+
+          Write-Host "`n✓ Code style check passed!"
  
       - name: Run Build
         run: |
+          $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
           if ($null -eq $assetsPath) { Write-Error "Assets folder NOT FOUND!"; exit 1 }
           $projectRoot = $assetsPath.Parent.FullName
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
- 
+
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
- 
+
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           if ($proc.ExitCode -ne 0) {
               if (Test-Path $logFile) {
-                  Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  Get-Content $logFile -Tail 50 | Out-File -FilePath $errorSummaryPath -Encoding utf8
               } else {
-                  "Unity process crashed instantly." | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  "Unity process crashed instantly." | Out-File -FilePath $errorSummaryPath -Encoding utf8
               }
               exit 1
           }
@@ -125,14 +146,26 @@ jobs:
         if: always()
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
- 
+
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
           $statusTag = if ($status -eq "success") { "SUCCESS" } else { "FAILURE" }
+
+          $errorSummaryPath = "$env:GITHUB_WORKSPACE\error_summary.txt"
+          Write-Host "Discord: Looking for error_summary.txt at: $errorSummaryPath"
+
           $summaryContent = "Check GitHub Logs"
-          if (Test-Path "error_summary.txt") {
-              $summaryContent = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim()
-              if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
+          if (Test-Path $errorSummaryPath) {
+              Write-Host "Discord: ✓ error_summary.txt found!"
+              $summaryContent = (Get-Content $errorSummaryPath -Raw -Encoding utf8).Trim()
+              Write-Host "Discord: Content length: $($summaryContent.Length) chars"
+              if ($summaryContent.Length -gt 2000) { $summaryContent = $summaryContent.Substring(0, 2000) + "..." }
+          } else {
+              Write-Host "Discord: ✗ error_summary.txt NOT found"
+              $allFiles = Get-ChildItem "$env:GITHUB_WORKSPACE" -Filter "*.txt" -ErrorAction SilentlyContinue
+              if ($allFiles) {
+                  Write-Host "Discord: Available .txt files: $($allFiles.Name -join ', ')"
+              }
           }
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
  
