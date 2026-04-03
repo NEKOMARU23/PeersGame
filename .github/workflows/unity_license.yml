@@ -28,32 +28,36 @@ jobs:
           $files = "unity_build.log", "error_summary.txt"
           foreach ($f in $files) { if (Test-Path $f) { Remove-Item $f -Force } }
 
+      - name: Code Style Check
+        run: |
+          $OutputEncoding = [System.Text.Encoding]::UTF8
+          Write-Host "Checking Code Style (Naming Conventions)..."
+          
+          # styleチェックを実行。違反（warning以上）があれば終了コード1を返す
+          dotnet format style "$env:GITHUB_WORKSPACE" --severity warning --verify-no-changes
+          
+          if ($LASTEXITCODE -ne 0) {
+              "Code Style Violation: Naming conventions (e.g., private fields should be _camelCase) are not followed. Please check Test.cs or other files." | Out-File -FilePath "error_summary.txt" -Encoding utf8
+              exit 1
+          }
+
       - name: Run Build
         run: |
-          # Assetsフォルダを基準にプロジェクトルートを自動特定
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
-          if ($null -eq $assetsPath) { 
-              Write-Error "Assets folder NOT FOUND!"
-              exit 1 
-          }
+          if ($null -eq $assetsPath) { Write-Error "Assets folder NOT FOUND!"; exit 1 }
           $projectRoot = $assetsPath.Parent.FullName
-          
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
 
-          Write-Host "Detected Project Root: $projectRoot"
-
-          # ゾンビプロセスの掃除
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
 
-          Write-Host "Launching Unity Build..."
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
           if ($proc.ExitCode -ne 0) {
               if (Test-Path $logFile) {
                   Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
               } else {
-                  "Unity process crashed instantly. Check Service Logon User (nekos)." | Out-File -FilePath "error_summary.txt" -Encoding utf8
+                  "Unity process crashed instantly." | Out-File -FilePath "error_summary.txt" -Encoding utf8
               }
               exit 1
           }
@@ -71,7 +75,6 @@ jobs:
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
           $statusTag = if ($status -eq "success") { "✅ SUCCESS" } else { "❌ FAILURE" }
@@ -82,10 +85,8 @@ jobs:
               if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
           }
           
-          # シングルクォートで囲むことで、バッククォートを純粋な文字列として扱います
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
 
-          # ハッシュテーブルで構造化（ConvertTo-Json が記号を安全に処理してくれます）
           $payload = @{
               embeds = @(@{
                   title = "Unity CI Monitor (PeersGame)"
