@@ -1,19 +1,19 @@
 name: Build App windows
-
+ 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
-  pull_request:  # これを追加：PR作成・更新時に自動実行
+  pull_request:  # PR作成・更新時に自動実行
     branches: [ main ]
-
+ 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
+ 
 defaults:
   run:
     shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
-
+ 
 jobs:
   buildForWindowsBasedPlatforms:
     name: Build for StandaloneWindows64
@@ -24,23 +24,32 @@ jobs:
         with:
           lfs: true
           clean: false
-
+ 
       - name: Clean Old Logs
         run: |
           $files = "unity_build.log", "error_summary.txt"
           foreach ($f in $files) { if (Test-Path $f) { Remove-Item $f -Force } }
-
+ 
       - name: Code Style Check
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
+          Write-Host "Searching for project or solution files..."
+          # .sln または .csproj を検索してパスを取得
+          $workspaceFile = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Include *.sln, *.csproj -Recurse | Select-Object -First 1
+          if ($null -eq $workspaceFile) {
+              Write-Host "No .sln or .csproj found. Skipping dotnet format."
+              exit 0 
+          }
+ 
+          Write-Host "Found: $($workspaceFile.FullName)"
           Write-Host "Checking Code Style (Naming Conventions)..."
-          dotnet format style "$env:GITHUB_WORKSPACE" --severity warn --verify-no-changes
-          
+          # 見つかったファイルを指定して実行
+          dotnet format style "$($workspaceFile.FullName)" --severity warn --verify-no-changes
           if ($LASTEXITCODE -ne 0) {
               "Code Style Violation: Naming conventions (e.g., private fields should be _camelCase) are not followed. Please check Test.cs or other files." | Out-File -FilePath "error_summary.txt" -Encoding utf8
               exit 1
           }
-
+ 
       - name: Run Build
         run: |
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
@@ -48,11 +57,10 @@ jobs:
           $projectRoot = $assetsPath.Parent.FullName
           $unityExe = "C:\Program Files\Unity\Hub\Editor\6000.3.1f1\Editor\Unity.exe"
           $logFile = "$env:GITHUB_WORKSPACE\unity_build.log"
-
+ 
           Get-Process -Name "Unity" -ErrorAction SilentlyContinue | Stop-Process -Force
-
+ 
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
-          
           if ($proc.ExitCode -ne 0) {
               if (Test-Path $logFile) {
                   Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
@@ -61,7 +69,7 @@ jobs:
               }
               exit 1
           }
-
+ 
       - name: Upload App
         if: success()
         uses: actions/upload-artifact@v4
@@ -69,25 +77,22 @@ jobs:
           name: App_Develop
           path: "**/Builds/App/*"
           retention-days: 7
-
+ 
       - name: Discord Notification
         if: always()
         run: |
           $OutputEncoding = [System.Text.Encoding]::UTF8
-
+ 
           $status = "${{ job.status }}"
           $color = if ($status -eq "success") { 3066993 } else { 15158332 }
-          # 絵文字なしの安全なタグ
           $statusTag = if ($status -eq "success") { "SUCCESS" } else { "FAILURE" }
-          
           $summaryContent = "Check GitHub Logs"
-          if (Test-Path "error_summary.txt") { 
+          if (Test-Path "error_summary.txt") {
               $summaryContent = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim()
               if ($summaryContent.Length -gt 800) { $summaryContent = $summaryContent.Substring(0, 800) + "..." }
           }
-          
           $finalSummary = '```' + "`n" + $summaryContent + "`n" + '```'
-
+ 
           $payload = @{
               embeds = @(@{
                   title = "Unity CI Monitor (PeersGame)"
@@ -100,10 +105,10 @@ jobs:
                   )
               })
           }
-
+ 
           $json = $payload | ConvertTo-Json -Depth 5 -Compress
           $jsonFilePath = "$env:TEMP\discord_payload.json"
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
           [System.IO.File]::WriteAllLines($jsonFilePath, $json, $utf8NoBom)
-
+ 
           curl.exe -X POST -H "Content-Type: application/json" -d "@$jsonFilePath" "${{ secrets.DISCORD_WEBHOOK_URL }}"
