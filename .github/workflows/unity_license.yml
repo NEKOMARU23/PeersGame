@@ -30,10 +30,10 @@ jobs:
 
       - name: Run Build
         run: |
-          # Assetsフォルダを基準にプロジェクトルートを自動特定（フォルダの重なり対策）
+          # Assetsフォルダを基準にプロジェクトルートを自動特定
           $assetsPath = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Filter "Assets" -Recurse -Directory | Select-Object -First 1
           if ($null -eq $assetsPath) { 
-              Write-Error "Assets folder NOT FOUND in $env:GITHUB_WORKSPACE"
+              Write-Error "Assets folder NOT FOUND!"
               exit 1 
           }
           $projectRoot = $assetsPath.Parent.FullName
@@ -49,10 +49,7 @@ jobs:
           Write-Host "Launching Unity Build..."
           $proc = Start-Process -FilePath "$unityExe" -ArgumentList "-batchmode", "-nographics", "-quit", "-projectPath `"$projectRoot`"", "-buildTarget", "StandaloneWindows64", "-executeMethod", "BuildApp.Build", "-logFile `"$logFile`"" -Wait -PassThru
           
-          $exitCode = $proc.ExitCode
-          Write-Host "Unity Exit Code: $exitCode"
-
-          if ($exitCode -ne 0) {
+          if ($proc.ExitCode -ne 0) {
               if (Test-Path $logFile) {
                   Get-Content $logFile -Tail 50 | Out-File -FilePath "error_summary.txt" -Encoding utf8
               } else {
@@ -66,7 +63,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App_Develop
-          # ワイルドカードを使用して深い階層の成果物もキャッチ
           path: "**/Builds/App/*"
           retention-days: 7
 
@@ -84,26 +80,15 @@ jobs:
           if (Test-Path "error_summary.txt") { 
               $summary = (Get-Content "error_summary.txt" -Raw -Encoding utf8).Trim()
               if ($summary.Length -gt 800) { $summary = $summary.Substring(0, 800) + "..." }
-              # JSONが壊れないよう引用符をエスケープ
-              $summary = $summary -replace '"', '\"' -replace '\\', '\\'
+              $summary = $summary -replace '"', '\"' -replace '\\', '\\' -replace "`n", " " -replace "`r", ""
           }
 
-          # PowerShellのオブジェクト経由ではなく、ヒアドキュメントでJSONを組み立てる（構文エラー回避）
-          $payload = @"
-          {
-            "embeds": [{
-              "title": "Unity CI Monitor (PeersGame)",
-              "description": "**$statusTag**",
-              "color": $color,
-              "author": { "name": "Triggered by: ${{ github.actor }}" },
-              "fields": [
-                { "name": "Analysis", "value": "
+          # YAML構文エラーを避けるため、1行のJSON文字列として構築
+          $json = '{"embeds": [{"title": "Unity CI Monitor (PeersGame)", "description": "**' + $statusTag + '**", "color": ' + $color + ', "author": {"name": "Triggered by: ${{ github.actor }}"}, "fields": [{"name": "Analysis", "value": "
 http://googleusercontent.com/immersive_entry_chip/0
 
-### ✅ 運用のための最終チェックリスト
+### ✅ 修正内容の解説
+* **ヒアドキュメント (`@"..."@`) の廃止**: YAMLのインデントルールと干渉して `Invalid workflow file` を引き起こしていたため、単純な文字列連結 (`'...' + $var + '...'`) に変更しました。
+* **改行コードの除去**: `$summary` 内に改行が含まれているとJSONが壊れる可能性があるため、通知用データから改行を消去する処理を追加しました。
 
-1.  **C#エラーの修正**: `Assets\TutorialInfo\Scripts\Test.cs` の `int Test = 1;` は修正しましたか？ これを直さないと、パスが合っていてもUnityがビルドを拒否します。
-2.  **サービスログオン**: Windowsの「サービス」管理画面で、GitHub Runnerが **`.\nekos`** ユーザーで実行されるよう設定し、サービスを再起動しましたか？
-3.  **Discord Webhook**: GitHubのリポジトリ設定（Secrets）に `DISCORD_WEBHOOK_URL` が正しく登録されているか確認してください。
-
-このYAMLは「Assetsを自動で見つける」ため、手動でパスを書き換える必要がありません。そのまま push して結果を待ちましょう！
+これでリポジトリへの `push` が正常に受け付けられるようになります！そのまま更新して実行してみてください。
