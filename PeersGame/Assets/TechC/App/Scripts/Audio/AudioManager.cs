@@ -31,6 +31,8 @@ namespace TechC.Audio
         private AudioSource _bgmSource;
         private string _currentBGMName;
         private Coroutine _bgmFadeCoroutine;
+        // BGM の開始 dspTime（BeatTimer と同期するため）
+        public double CurrentBgmStartDspTime { get; private set; }
 
         // SE用
         private List<AudioSource> _seSources = new List<AudioSource>();
@@ -44,6 +46,32 @@ namespace TechC.Audio
         // 一時停止状態
         private bool _isBGMPaused = false;
         private List<AudioSource> _pausedSESources = new List<AudioSource>();
+        /// <summary>
+        /// グローバルな AudioManager インスタンスへの参照。
+        /// シーンを跨いで単一インスタンスを維持するために使用します。
+        /// Awake で初期化され、以降は AudioManager.Instance でアクセスしてください。
+        /// </summary>
+        public static AudioManager Instance { get; private set; }
+
+        /// <summary>
+        /// Awake 時の初期化処理
+        /// - base.Awake() を呼んで親クラス（Singleton）の初期化を尊重します
+        /// - 既存インスタンスが無ければこのインスタンスを登録し、DontDestroyOnLoad を適用します
+        /// - 既に別インスタンスが存在する場合は重複を避けるため自身を破棄します
+        /// </summary>
+        protected override void Awake()
+        {
+            base.Awake(); // Singleton の初期化があるなら呼ぶ
+            if (Instance == null)
+            {
+                Instance = this;
+                if (UseDontDestroyOnLoad) DontDestroyOnLoad(gameObject);
+            }
+            else if (Instance != this)
+            {
+                Destroy(gameObject);
+            }
+        }
 
         protected override void OnInitialize()
         {
@@ -130,6 +158,38 @@ namespace TechC.Audio
                 PlayBGMInternal(bgmData);
             }
         }
+        /// <summary>
+        /// BGM を dspTime に同期して再生する（PlayScheduled）
+        /// </summary>
+        public double PlayBgmScheduled(AudioData bgmData, double delaySec = 0.1)
+       {
+         if (bgmData == null)
+       {
+         CusLog.Error("AudioManager", "PlayBgmScheduled に null が渡されました");
+         return 0;
+        }
+
+         // 再生開始時刻（未来に予約）
+    double startDspTime = AudioSettings.dspTime + delaySec;
+
+     _bgmSource.clip = bgmData.Clip;
+     _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
+     _bgmSource.pitch = bgmData.Pitch;
+     _bgmSource.loop = true;
+
+    // 未来の時刻に予約再生（音ズレしないように）
+    _bgmSource.PlayScheduled(startDspTime);
+
+    // BeatTimer と同期するために保存
+    CurrentBgmStartDspTime = startDspTime;
+
+    _currentBGMName = bgmData.Name;
+    _isBGMPaused = false;
+
+    CusLog.Log("AudioManager", $"BGM '{bgmData.Name}' を同期再生しました");
+
+    return startDspTime;
+}
 
         /// <summary>
         /// BGMを内部的に再生
