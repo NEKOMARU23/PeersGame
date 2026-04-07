@@ -13,8 +13,9 @@ namespace TechC.InGame.Player
     {
         [SerializeField] private Vector2Int _startGridPos;
 
-        /// <summary>現在のグリッド座標</summary>
         private Vector2Int _currentGridPos;
+
+        private float _placementY;
 
         private void Start()
         {
@@ -33,8 +34,33 @@ namespace TechC.InGame.Player
 
             _currentGridPos = _startGridPos;
             var tile = mapManager.GetTile(_currentGridPos);
+
+            CachePlacementY(tile);
+
             var tilePos = tile.TileObject.transform.position;
-            transform.position = new Vector3(tilePos.x, transform.position.y, tilePos.z);
+            transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
+        }
+
+        /// <summary>タイル上面とプレイヤー底部からY座標を計算してキャッシュする</summary>
+        private void CachePlacementY(Map.TileData tile)
+        {
+            var tileRenderer = tile.TileObject.GetComponent<Renderer>();
+            if (tileRenderer == null)
+            {
+                CusLog.Error("Rendererがnullです");
+                return;
+            }
+            float tileTopY = tileRenderer.bounds.max.y;
+
+            var playerRenderer = GetComponent<Renderer>();
+            if (playerRenderer == null)
+            {
+                CusLog.Error("Rendererがnullです");
+                return;
+            }
+            float playerBottomOffset = transform.position.y - playerRenderer.bounds.min.y;
+
+            _placementY = tileTopY + playerBottomOffset;
         }
 
         private void Update()
@@ -72,7 +98,7 @@ namespace TechC.InGame.Player
             _currentGridPos = nextPos;
             var tile = mapManager.GetTile(_currentGridPos);
             var tilePos = tile.TileObject.transform.position;
-            transform.position = new Vector3(tilePos.x, transform.position.y, tilePos.z);
+            transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
         }
     }
 }

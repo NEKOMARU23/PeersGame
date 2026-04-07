@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using TechC.InGame.Log;
 using TechC.InGame.Map;
 
 namespace TechC.Editor.InGame
@@ -15,6 +16,7 @@ namespace TechC.Editor.InGame
     {
         private const string MenuGenerateMap = "TechC/Map/マップを生成 #&t";
         private const string MenuDeleteMap = "TechC/Map/マップを削除 #&d";
+        private const float TileHeight = 0f;
 
         [MenuItem(MenuGenerateMap)]
         private static void GenerateMapShortcut()
@@ -42,7 +44,7 @@ namespace TechC.Editor.InGame
         {
             var generator = Object.FindFirstObjectByType<MapGenerator>();
             if (generator == null)
-                Debug.LogError("[MapGeneratorEditor] シーン上に MapGenerator が見つかりません。");
+                CusLog.Error("[MapGeneratorEditor] シーン上に MapGenerator が見つかりません。");
             return generator;
         }
 
@@ -66,19 +68,19 @@ namespace TechC.Editor.InGame
 
             if (mapData == null)
             {
-                Debug.LogError("[MapGeneratorEditor] MapDataSO がアサインされていません。");
+                CusLog.Error("[MapGeneratorEditor] MapDataSO がアサインされていません。");
                 return;
             }
 
             if (mapData.TilePrefab == null)
             {
-                Debug.LogError("[MapGeneratorEditor] TilePrefab がアサインされていません。");
+                CusLog.Error("[MapGeneratorEditor] TilePrefab がアサインされていません。");
                 return;
             }
 
             if (tileParent == null)
             {
-                Debug.LogError("[MapGeneratorEditor] TileParent がアサインされていません。");
+                CusLog.Error("[MapGeneratorEditor] TileParent がアサインされていません。");
                 return;
             }
 
@@ -96,7 +98,7 @@ namespace TechC.Editor.InGame
                 {
                     var worldPos = new Vector3(
                         col * mapData.TileSpacing - offsetX,
-                        0f,
+                        TileHeight,
                         row * mapData.TileSpacing - offsetZ
                     );
                     var tileObject = (GameObject)PrefabUtility.InstantiatePrefab(mapData.TilePrefab, tileParent);
