@@ -435,6 +435,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Core.InGameManager
   _mapGenerator: {fileID: 3518502808265626466}
+  _scoreData: {fileID: 11400000, guid: f8426f4cf67f1f34cba6caaa748b0b4c, type: 2}
 --- !u!1 &4190884043311234068
 GameObject:
   m_ObjectHideFlags: 0
@@ -725,7 +726,6 @@ Transform:
   - {fileID: 6577419268869588799}
   - {fileID: 7260058926040644572}
   - {fileID: 479347146131005837}
-  - {fileID: 1265456213251745879}
   - {fileID: 1395593747977738966}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -741,53 +741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bb33d3697f6aa648b26a6daf1aa605d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Core.InGameSingletonInitializer
-  _gameManager: {fileID: 4639359615729843893}
   _inGameManager: {fileID: 5804974084127632247}
---- !u!1 &7746707144150700582
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1265456213251745879}
-  - component: {fileID: 4639359615729843893}
-  m_Layer: 0
-  m_Name: GameManager(will delete)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1265456213251745879
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7746707144150700582}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.0649, y: 0, z: -1.98697}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 522301552625959696}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4639359615729843893
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7746707144150700582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cdd4301a151039941b4a5af5c80c249d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  _scoreData: {fileID: 11400000, guid: f8426f4cf67f1f34cba6caaa748b0b4c, type: 2}
 --- !u!1 &8642618619185376155
 GameObject:
   m_ObjectHideFlags: 0
