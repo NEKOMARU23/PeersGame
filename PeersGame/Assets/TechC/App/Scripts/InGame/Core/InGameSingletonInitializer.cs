@@ -1,3 +1,5 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace TechC.InGame.Core
@@ -8,7 +10,8 @@ namespace TechC.InGame.Core
     [DefaultExecutionOrder(-9999)]
     public class InGameSingletonInitializer : MonoBehaviour
     {
-        // [Header("InGameシーンで必要なSingleton")]
+        [Header("InGameシーンで必要なSingleton")]
+        [SerializeField] private InGameManager _inGameManager;
 
         private void Awake()
         {
@@ -17,11 +20,7 @@ namespace TechC.InGame.Core
 
         private void InitializeManagers()
         {
-            // 初期化順序は依存関係に応じて調整
-            // 例:
-            // InputManager.Init();
-            // UIManager.Init();
-            // GameManager.Init();
+            _inGameManager.InitializeSingleton();
         }
     }
 }
