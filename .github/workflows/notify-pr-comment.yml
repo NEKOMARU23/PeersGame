@@ -1,0 +1,47 @@
+name: Notify Discord on PR Comment
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify:
+    # PRへのコメントのみ対象（issueコメントを除外）
+    if: github.event.issue.pull_request != null || github.event_name != 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          # コメント内容の取得（イベント種別ごとに分岐）
+          BODY="${{ github.event.comment.body || github.event.review.body }}"
+          URL="${{ github.event.comment.html_url || github.event.review.html_url }}"
+          AUTHOR="${{ github.event.sender.login }}"
+
+          # 空コメントはスキップ
+          if [ -z "$BODY" ]; then
+            echo "Empty comment, skipping."
+            exit 0
+          fi
+
+          # 2000文字制限
+          BODY="${BODY:0:2000}"
+
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"💬 PRにコメントが届きました\",
+                \"description\": \"${BODY}\",
+                \"color\": 5814783,
+                \"author\": { \"name\": \"${AUTHOR}\" },
+                \"fields\": [
+                  { \"name\": \"リンク\", \"value\": \"[コメントを見る](${URL})\", \"inline\": false }
+                ]
+              }]
+            }"
