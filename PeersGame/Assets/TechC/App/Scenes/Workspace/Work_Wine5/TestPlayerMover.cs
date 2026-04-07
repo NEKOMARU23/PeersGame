@@ -100,7 +100,7 @@ namespace TechC.InGame.Player
             var tilePos = tile.TileObject.transform.position;
             transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
 
-            InGameManager.I.ScoreManager.AddMoveSuccessScore();
+            GameManager.I.ScoreManager.AddMoveSuccessScore();
         }
     }
 }
