@@ -1,5 +1,3 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace TechC.InGame.Core
@@ -15,12 +13,8 @@ namespace TechC.InGame.Core
 
         private void Awake()
         {
-            InitializeManagers();
-        }
-
-        private void InitializeManagers()
-        {
             _inGameManager.InitializeSingleton();
         }
+
     }
 }
