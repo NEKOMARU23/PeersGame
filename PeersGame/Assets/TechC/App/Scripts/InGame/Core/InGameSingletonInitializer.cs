@@ -17,11 +17,7 @@ namespace TechC.InGame.Core
 
         private void InitializeManagers()
         {
-            // 初期化順序は依存関係に応じて調整
-            // 例:
-            // InputManager.Init();
-            // UIManager.Init();
-            // GameManager.Init();
+            InGameManager.Init();
         }
     }
 }

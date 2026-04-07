@@ -10,12 +10,11 @@ namespace TechC.InGame.Map
     public class MapDataSO : ScriptableObject
     {
         [Header("マップサイズ")]
-        [SerializeField, Min(1)] private int _rows = 5;
-        [SerializeField, Min(1)] private int _columns = 5;
+        [SerializeField, Min(1), Tooltip("マップの縦のマス数")] private int _rows = 5;
+        [SerializeField, Min(1), Tooltip("マップの横のマス数")] private int _columns = 5;
 
         [Header("タイル設定")]
         [SerializeField] private GameObject _tilePrefab;
-        [SerializeField] private Transform _tileParent;
 
         /// <summary>縦のマス数</summary>
         public int Rows => _rows;
@@ -25,8 +24,5 @@ namespace TechC.InGame.Map
 
         /// <summary>生成するタイルのPrefab</summary>
         public GameObject TilePrefab => _tilePrefab;
-
-        /// <summary>生成したタイルを格納する親オブジェクト</summary>
-        public Transform TileParent => _tileParent;
     }
 }

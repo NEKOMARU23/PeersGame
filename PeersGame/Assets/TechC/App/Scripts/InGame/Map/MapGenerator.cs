@@ -12,6 +12,7 @@ namespace TechC.InGame.Map
         private const float TileHeight = 0f;
 
         [SerializeField] private MapDataSO _mapData;
+        [SerializeField] private Transform _tileParent;
 
         /// <summary>
         /// マップを生成してMapManagerを返す
@@ -30,6 +31,12 @@ namespace TechC.InGame.Map
                 return null;
             }
 
+            if (_tileParent == null)
+            {
+                CusLog.Error("[MapGenerator] TileParent がアサインされていません。");
+                return null;
+            }
+
             var mapManager = new MapManager(_mapData.Rows, _mapData.Columns);
 
             for (int row = 0; row < _mapData.Rows; row++)
@@ -43,7 +50,7 @@ namespace TechC.InGame.Map
                         _mapData.TilePrefab,
                         worldPos,
                         Quaternion.identity,
-                        _mapData.TileParent
+                        _tileParent
                     );
                     tileObject.name = $"Tile({col},{row})";
 
