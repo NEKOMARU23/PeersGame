@@ -32,7 +32,8 @@ namespace TechC.Audio
         private string _currentBGMName;
         private Coroutine _bgmFadeCoroutine;
         // BGM の開始 dspTime（BeatTimer と同期するため）
-        public double CurrentBgmStartDspTime { get; private set; }
+        public float CurrentBgmStartDspTime { get; private set; }
+
 
         // SE用
         private List<AudioSource> _seSources = new List<AudioSource>();
@@ -52,7 +53,6 @@ namespace TechC.Audio
         /// Awake で初期化され、以降は AudioManager.Instance でアクセスしてください。
         /// </summary>
         public static AudioManager Instance { get; private set; }
-
         /// <summary>
         /// Awake 時の初期化処理
         /// - base.Awake() を呼んで親クラス（Singleton）の初期化を尊重します
@@ -61,15 +61,22 @@ namespace TechC.Audio
         /// </summary>
         protected override void Awake()
         {
-            base.Awake(); // Singleton の初期化があるなら呼ぶ
             if (Instance == null)
             {
                 Instance = this;
-                if (UseDontDestroyOnLoad) DontDestroyOnLoad(gameObject);
+                DontDestroyOnLoad(gameObject);
             }
-            else if (Instance != this)
+            else
             {
                 Destroy(gameObject);
+                return;
+            }
+
+            if (_bgmSource == null)
+            {
+                _bgmSource = gameObject.AddComponent<AudioSource>();
+                _bgmSource.playOnAwake = false;
+                _bgmSource.loop = true;
             }
         }
 
@@ -161,37 +168,16 @@ namespace TechC.Audio
         /// <summary>
         /// BGM を DSP 時刻で予約再生し、BeatTimer と同期できるよう開始時刻を返す
         /// </summary>
-        public double PlayBgmScheduled(AudioData bgmData, double delaySec = 0.1)
+        public float PlayBgmScheduled(AudioClip clip, float delaySec = 0.1f)
         {
-            if (bgmData == null || bgmData.Clip == null)
-            {
-                CusLog.Error("AudioManager", "PlayBgmScheduled: bgmData が null か AudioClip が未設定です");
-                return AudioSettings.dspTime;
-            }
+            if (clip == null) return (float)AudioSettings.dspTime;
 
-            // BGM AudioSource が未生成なら作る（冪等）
-            if (_bgmSource == null)
-            {
-                _bgmSource = gameObject.AddComponent<AudioSource>();
-                _bgmSource.playOnAwake = false;
-                _bgmSource.loop = true;
-            }
+            float startTime = (float)AudioSettings.dspTime + delaySec;
 
-            // DSP 時刻で予約
-            double startTime = AudioSettings.dspTime + delaySec;
+            _bgmSource.clip = clip;
+            _bgmSource.PlayScheduled(startTime); // float のまま渡す
 
-            _bgmSource.clip = bgmData.Clip;
-            _bgmSource.loop = bgmData.Loop;
-            _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
-            _bgmSource.pitch = bgmData.Pitch;
-
-            _bgmSource.PlayScheduled(startTime);
-
-            // BeatTimer が同期に使う値
             CurrentBgmStartDspTime = startTime;
-
-            _currentBGMName = bgmData.Name;
-
             return startTime;
         }
 
