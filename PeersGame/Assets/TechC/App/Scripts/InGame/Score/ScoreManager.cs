@@ -1,3 +1,5 @@
+using System;
+
 namespace TechC.InGame.Score
 {
     /// <summary>
@@ -7,8 +9,21 @@ namespace TechC.InGame.Score
     {
         private readonly ScoreDataSO _scoreData;
 
+        private int _score;
+
         /// <summary>現在のスコア</summary>
-        public int Score { get; private set; }
+        public int Score
+        {
+            get => _score;
+            private set
+            {
+                _score = value;
+                OnScoreChanged?.Invoke(_score);
+            }
+        }
+
+        /// <summary>スコアが変化した時に発火するイベント</summary>
+        public event Action<int> OnScoreChanged;
 
         public ScoreManager(ScoreDataSO scoreData)
         {
