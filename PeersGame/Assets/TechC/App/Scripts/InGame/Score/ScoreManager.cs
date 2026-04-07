@@ -29,5 +29,14 @@ namespace TechC.InGame.Score
 
         /// <summary>防御成功時にスコアを加算する</summary>
         public void AddDefenseSuccessScore() => Score += _scoreData.DefenseSuccessScore;
+
+        /// <summary>移動失敗時にスコアを減算する</summary>
+        public void SubMoveFailScore() => Score -= _scoreData.MoveFailScore;
+
+        /// <summary>攻撃失敗時にスコアを減算する</summary>
+        public void SubAttackFailScore() => Score -= _scoreData.AttackFailScore;
+
+        /// <summary>防御失敗時にスコアを減算する</summary>
+        public void SubDefenseFailScore() => Score -= _scoreData.DefenseFailScore;
     }
 }
