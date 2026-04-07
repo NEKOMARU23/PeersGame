@@ -159,37 +159,41 @@ namespace TechC.Audio
             }
         }
         /// <summary>
-        /// BGM を dspTime に同期して再生する（PlayScheduled）
+        /// BGM を DSP 時刻で予約再生し、BeatTimer と同期できるよう開始時刻を返す
         /// </summary>
         public double PlayBgmScheduled(AudioData bgmData, double delaySec = 0.1)
-       {
-         if (bgmData == null)
-       {
-         CusLog.Error("AudioManager", "PlayBgmScheduled に null が渡されました");
-         return 0;
+        {
+            if (bgmData == null || bgmData.Clip == null)
+            {
+                CusLog.Error("AudioManager", "PlayBgmScheduled: bgmData が null か AudioClip が未設定です");
+                return AudioSettings.dspTime;
+            }
+
+            // BGM AudioSource が未生成なら作る（冪等）
+            if (_bgmSource == null)
+            {
+                _bgmSource = gameObject.AddComponent<AudioSource>();
+                _bgmSource.playOnAwake = false;
+                _bgmSource.loop = true;
+            }
+
+            // DSP 時刻で予約
+            double startTime = AudioSettings.dspTime + delaySec;
+
+            _bgmSource.clip = bgmData.Clip;
+            _bgmSource.loop = bgmData.Loop;
+            _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
+            _bgmSource.pitch = bgmData.Pitch;
+
+            _bgmSource.PlayScheduled(startTime);
+
+            // BeatTimer が同期に使う値
+            CurrentBgmStartDspTime = startTime;
+
+            _currentBGMName = bgmData.Name;
+
+            return startTime;
         }
-
-         // 再生開始時刻（未来に予約）
-    double startDspTime = AudioSettings.dspTime + delaySec;
-
-     _bgmSource.clip = bgmData.Clip;
-     _bgmSource.volume = bgmData.Volume * _bgmVolume * _masterVolume;
-     _bgmSource.pitch = bgmData.Pitch;
-     _bgmSource.loop = true;
-
-    // 未来の時刻に予約再生（音ズレしないように）
-    _bgmSource.PlayScheduled(startDspTime);
-
-    // BeatTimer と同期するために保存
-    CurrentBgmStartDspTime = startDspTime;
-
-    _currentBGMName = bgmData.Name;
-    _isBGMPaused = false;
-
-    CusLog.Log("AudioManager", $"BGM '{bgmData.Name}' を同期再生しました");
-
-    return startDspTime;
-}
 
         /// <summary>
         /// BGMを内部的に再生
