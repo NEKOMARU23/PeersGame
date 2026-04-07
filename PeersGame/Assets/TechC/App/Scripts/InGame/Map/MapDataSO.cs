@@ -16,6 +16,9 @@ namespace TechC.InGame.Map
         [Header("タイル設定")]
         [SerializeField] private GameObject _tilePrefab;
 
+        [Header("タイル間隔")]
+        [SerializeField, Min(0.1f)] private float _tileSpacing = 1f;
+
         /// <summary>縦のマス数</summary>
         public int Rows => _rows;
 
@@ -24,5 +27,8 @@ namespace TechC.InGame.Map
 
         /// <summary>生成するタイルのPrefab</summary>
         public GameObject TilePrefab => _tilePrefab;
+
+        /// <summary>タイル間の間隔</summary>
+        public float TileSpacing => _tileSpacing;
     }
 }

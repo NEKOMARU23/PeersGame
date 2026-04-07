@@ -15,3 +15,4 @@ MonoBehaviour:
   _rows: 5
   _columns: 5
   _tilePrefab: {fileID: 8001261224328220893, guid: e653940562c020e4bb4ce64d23294491, type: 3}
+  _tileSpacing: 2

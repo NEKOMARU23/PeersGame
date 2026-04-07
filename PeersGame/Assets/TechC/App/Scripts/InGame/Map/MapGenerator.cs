@@ -37,6 +37,9 @@ namespace TechC.InGame.Map
                 return null;
             }
 
+            for (int i = _tileParent.childCount - 1; i >= 0; i--)
+                Destroy(_tileParent.GetChild(i).gameObject);
+
             var mapManager = new MapManager(_mapData.Rows, _mapData.Columns);
 
             for (int row = 0; row < _mapData.Rows; row++)
@@ -44,7 +47,7 @@ namespace TechC.InGame.Map
                 for (int col = 0; col < _mapData.Columns; col++)
                 {
                     var gridPos = new Vector2Int(col, row);
-                    var worldPos = new Vector3(col, TileHeight, row);
+                    var worldPos = new Vector3(col * _mapData.TileSpacing, TileHeight, row * _mapData.TileSpacing);
 
                     var tileObject = Instantiate(
                         _mapData.TilePrefab,
