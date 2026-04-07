@@ -18,6 +18,7 @@ namespace TechC.InGame.UI
 
         private void OnDisable()
         {
+            if (!GameManager.IsValid()) return;
             GameManager.I.ScoreManager.OnScoreChanged -= UpdateDisplay;
         }
 
