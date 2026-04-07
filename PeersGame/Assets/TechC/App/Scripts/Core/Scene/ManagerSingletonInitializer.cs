@@ -13,7 +13,7 @@ namespace TechC.Core.Scene
         [Header("ManagerSceneで必要なSingleton")]
         [SerializeField] private SceneController _sceneController;
         [SerializeField] private AudioManager    _audioManager;
-        // [SerializeField] private GameManager     _gameManager; // ビルドするときに有効化にしてInGameの初期化処理のほうを無効化にする
+        [SerializeField] private GameManager     _gameManager;
 
         private void Awake()
         {
@@ -24,7 +24,7 @@ namespace TechC.Core.Scene
         {
             _sceneController.InitializeSingleton();
             _audioManager.InitializeSingleton();
-            // _gameManager.InitializeSingleton();
+            _gameManager.InitializeSingleton();
         }
     }
 }

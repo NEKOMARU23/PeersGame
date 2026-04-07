@@ -12,7 +12,7 @@ namespace TechC.Core.Scene
         private const string ManagerSceneName = "Manager";
         private static bool _isBootstrapped = false;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
         {
             if (_isBootstrapped)
