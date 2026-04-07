@@ -30,6 +30,9 @@ namespace TechC.InGame.UI
         private void UpdateDisplay(int score)
         {
             _scoreText.text = score.ToString();
+            
+            if (score < 30) return;
+            SceneController.I.ChangeResultScene();
         }
     }
 }
