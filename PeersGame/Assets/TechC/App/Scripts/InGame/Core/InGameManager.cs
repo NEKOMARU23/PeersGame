@@ -2,7 +2,7 @@ using UnityEngine;
 using TechC.Core.Manager;
 using TechC.InGame.Map;
 using TechC.InGame.Log;
-using TechC.Scene.Manager;
+using TechC.InGame.Score;
 
 namespace TechC.InGame.Core
 {
@@ -15,15 +15,17 @@ namespace TechC.InGame.Core
         protected override bool UseDontDestroyOnLoad => false;
 
         [SerializeField] private MapGenerator _mapGenerator;
+        [SerializeField] private ScoreDataSO  _scoreData;
 
-        /// <summary>
-        /// マップ状態管理クラス
-        /// </summary>
-        public MapManager MapManager { get; private set; }
+        /// <summary>マップ状態管理クラス</summary>
+        public MapManager  MapManager  { get; private set; }
+
+        /// <summary>スコア管理クラス</summary>
+        public ScoreManager ScoreManager { get; private set; }
 
         protected override void OnInitialize()
         {
-            GameManager.I.ScoreManager.Reset();
+            ScoreManager = new ScoreManager(_scoreData);
             GenerateMap();
         }
 

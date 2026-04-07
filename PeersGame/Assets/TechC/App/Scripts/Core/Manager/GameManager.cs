@@ -1,6 +1,6 @@
 using UnityEngine;
 using TechC.Core.Manager;
-using TechC.InGame.Score;
+
 namespace TechC.Scene.Manager
 {
     /// <summary>
@@ -11,16 +11,10 @@ namespace TechC.Scene.Manager
     {
         protected override bool UseDontDestroyOnLoad => true;
 
-        [SerializeField] private ScoreDataSO _scoreData;
+        /// <summary>ゲーム終了時に保存する最終スコア</summary>
+        public int FinalScore { get; private set; }
 
-        /// <summary>
-        /// スコア管理クラス
-        /// </summary>
-        public ScoreManager ScoreManager { get; private set; }
-
-        protected override void OnInitialize()
-        {
-            ScoreManager = new ScoreManager(_scoreData);
-        }
+        /// <summary>ゲーム終了時に最終スコアを保存する</summary>
+        public void SetFinalScore(int score) => FinalScore = score;
     }
 }

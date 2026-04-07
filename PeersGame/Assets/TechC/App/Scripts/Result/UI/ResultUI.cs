@@ -13,7 +13,7 @@ namespace TechC.Result.UI
 
         private void Start()
         {
-            _scoreText.text = GameManager.I.ScoreManager.Score.ToString();
+            _scoreText.text = GameManager.I.FinalScore.ToString();
         }
     }
 }

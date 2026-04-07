@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using TechC.InGame.Core;
 using TechC.Scene.Manager;
 
 namespace TechC.InGame.UI
@@ -13,26 +14,28 @@ namespace TechC.InGame.UI
 
         private void OnEnable()
         {
-            GameManager.I.ScoreManager.OnScoreChanged += UpdateDisplay;
+            if (!InGameManager.IsValid()) return;
+            InGameManager.I.ScoreManager.OnScoreChanged += UpdateDisplay;
         }
 
         private void OnDisable()
         {
-            if (!GameManager.IsValid()) return;
-            GameManager.I.ScoreManager.OnScoreChanged -= UpdateDisplay;
+            if (!InGameManager.IsValid()) return;
+            InGameManager.I.ScoreManager.OnScoreChanged -= UpdateDisplay;
         }
 
         private void Start()
         {
-            UpdateDisplay(GameManager.I.ScoreManager.Score);
+            UpdateDisplay(InGameManager.I.ScoreManager.Score);
         }
 
         private void UpdateDisplay(int score)
         {
             _scoreText.text = score.ToString();
-            
-            if (score < 30) return;
-            SceneController.I.ChangeResultScene();
+
+            // 将来的には音楽が終了したらこの処理を呼ぶ
+            // GameManager.I.SetFinalScore(score);
+            // SceneController.I.ChangeResultScene();
         }
     }
 }

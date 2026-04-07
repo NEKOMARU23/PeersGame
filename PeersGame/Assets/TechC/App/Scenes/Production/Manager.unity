@@ -165,7 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Core.Scene.ManagerSingletonInitializer
   _sceneController: {fileID: 801765383}
   _audioManager: {fileID: 2115598373}
-  _gameManager: {fileID: 0}
+  _gameManager: {fileID: 1783688226}
 --- !u!1 &801765382
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,13 +219,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1783688225}
+  - component: {fileID: 1783688226}
   m_Layer: 0
-  m_Name: GameManager(will acttach)
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1783688225
 Transform:
   m_ObjectHideFlags: 0
@@ -241,6 +242,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1783688226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783688223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdd4301a151039941b4a5af5c80c249d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TechC.Scene.Manager.GameManager
+  _scoreData: {fileID: 11400000, guid: f8426f4cf67f1f34cba6caaa748b0b4c, type: 2}
 --- !u!1 &2115598372
 GameObject:
   m_ObjectHideFlags: 0
