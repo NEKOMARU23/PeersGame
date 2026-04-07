@@ -11,15 +11,30 @@ namespace TechC.InGame.Player
     /// </summary>
     public class TestPlayerMover : MonoBehaviour
     {
+        [SerializeField] private Vector2Int _startGridPos;
+
         /// <summary>現在のグリッド座標</summary>
         private Vector2Int _currentGridPos;
 
         private void Start()
         {
-            _currentGridPos = new Vector2Int(
-                Mathf.RoundToInt(transform.position.x),
-                Mathf.RoundToInt(transform.position.z)
-            );
+            var mapManager = InGameManager.I?.MapManager;
+            if (mapManager == null)
+            {
+                CusLog.Warning("[TestPlayerMover] MapManager が取得できませんでした。");
+                return;
+            }
+
+            if (!mapManager.IsValidPosition(_startGridPos))
+            {
+                CusLog.Warning($"[TestPlayerMover] 開始グリッド座標 {_startGridPos} が無効です。");
+                return;
+            }
+
+            _currentGridPos = _startGridPos;
+            var tile = mapManager.GetTile(_currentGridPos);
+            var tilePos = tile.TileObject.transform.position;
+            transform.position = new Vector3(tilePos.x, transform.position.y, tilePos.z);
         }
 
         private void Update()
@@ -55,7 +70,9 @@ namespace TechC.InGame.Player
             if (!mapManager.IsValidPosition(nextPos)) return;
 
             _currentGridPos = nextPos;
-            transform.position = new Vector3(_currentGridPos.x, transform.position.y, _currentGridPos.y);
+            var tile = mapManager.GetTile(_currentGridPos);
+            var tilePos = tile.TileObject.transform.position;
+            transform.position = new Vector3(tilePos.x, transform.position.y, tilePos.z);
         }
     }
 }
