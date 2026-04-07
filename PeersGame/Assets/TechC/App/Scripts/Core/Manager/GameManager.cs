@@ -1,24 +1,26 @@
 using UnityEngine;
 using TechC.Core.Manager;
 using TechC.InGame.Score;
-
-/// <summary>
-/// ゲーム全体を管理するクラス
-/// シーンをまたいで情報を保持する
-/// </summary>
-public class GameManager : Singleton<GameManager>
+namespace TechC.Scene.Manager
 {
-    protected override bool UseDontDestroyOnLoad => true;
-
-    [SerializeField] private ScoreDataSO _scoreData;
-
     /// <summary>
-    /// スコア管理クラス
+    /// ゲーム全体を管理するクラス
+    /// シーンをまたいで情報を保持する
     /// </summary>
-    public ScoreManager ScoreManager { get; private set; }
-
-    protected override void OnInitialize()
+    public class GameManager : Singleton<GameManager>
     {
-        ScoreManager = new ScoreManager(_scoreData);
+        protected override bool UseDontDestroyOnLoad => true;
+
+        [SerializeField] private ScoreDataSO _scoreData;
+
+        /// <summary>
+        /// スコア管理クラス
+        /// </summary>
+        public ScoreManager ScoreManager { get; private set; }
+
+        protected override void OnInitialize()
+        {
+            ScoreManager = new ScoreManager(_scoreData);
+        }
     }
 }

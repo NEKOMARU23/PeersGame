@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TechC.InGame.Core;
 using TechC.InGame.Log;
+using TechC.Scene.Manager;
 
 namespace TechC.InGame.Player
 {

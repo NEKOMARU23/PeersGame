@@ -2,6 +2,7 @@ using UnityEngine;
 using TechC.Core.Manager;
 using TechC.InGame.Map;
 using TechC.InGame.Log;
+using TechC.Scene.Manager;
 
 namespace TechC.InGame.Core
 {

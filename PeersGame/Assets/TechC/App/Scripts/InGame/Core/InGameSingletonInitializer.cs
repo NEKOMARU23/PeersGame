@@ -1,3 +1,4 @@
+using TechC.Scene.Manager;
 using UnityEngine;
 
 namespace TechC.InGame.Core
