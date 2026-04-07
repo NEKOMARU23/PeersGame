@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using TechC.InGame.Core;
 using TechC.InGame.Log;
 
@@ -31,10 +32,13 @@ namespace TechC.InGame.Player
 
         private Vector2Int GetMoveInput()
         {
-            if (Input.GetKeyDown(KeyCode.W)) return Vector2Int.up;
-            if (Input.GetKeyDown(KeyCode.S)) return Vector2Int.down;
-            if (Input.GetKeyDown(KeyCode.A)) return Vector2Int.left;
-            if (Input.GetKeyDown(KeyCode.D)) return Vector2Int.right;
+            var kb = Keyboard.current;
+            if (kb == null) return Vector2Int.zero;
+
+            if (kb.wKey.wasPressedThisFrame) return Vector2Int.up;
+            if (kb.sKey.wasPressedThisFrame) return Vector2Int.down;
+            if (kb.aKey.wasPressedThisFrame) return Vector2Int.left;
+            if (kb.dKey.wasPressedThisFrame) return Vector2Int.right;
             return Vector2Int.zero;
         }
 
