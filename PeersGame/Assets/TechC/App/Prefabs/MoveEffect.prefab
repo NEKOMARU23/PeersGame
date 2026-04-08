@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2880501364198508292}
   - component: {fileID: 1908478376119116573}
   m_Layer: 0
-  m_Name: Move
+  m_Name: MoveEffect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
