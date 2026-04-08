@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Send Discord Notification
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PR_COMMENT }}
         run: |
           # コメント内容の取得（イベント種別ごとに分岐）
           BODY="${{ github.event.comment.body || github.event.review.body }}"

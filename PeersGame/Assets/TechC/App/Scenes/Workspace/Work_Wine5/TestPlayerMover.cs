@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TechC.InGame.Core;
 using TechC.InGame.Log;
+using TechC.Scene.Manager;
 
 namespace TechC.InGame.Player
 {
@@ -99,6 +100,8 @@ namespace TechC.InGame.Player
             var tile = mapManager.GetTile(_currentGridPos);
             var tilePos = tile.TileObject.transform.position;
             transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
+
+            InGameManager.I.ScoreManager.AddMoveSuccessScore();
         }
     }
 }
