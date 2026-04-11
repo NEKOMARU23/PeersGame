@@ -5,10 +5,17 @@ namespace TechC.InGame.Player
 {
     public class PlayerStatus : MonoBehaviour
     {
+        public static PlayerStatus I { get; private set; }
+
         [Header("HPの設定")]
         [SerializeField] private int maxHp = 10; // 最大の体力の値
         [SerializeField] private Image[] hpImages; // HPの画像
         private int currentHp; // 現在の体力の値
+
+        private void Awake()
+        {
+            I = this;
+        }
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -37,11 +44,15 @@ namespace TechC.InGame.Player
             }
         }
 
-        public void TakeHeal(int heal) // ダメージを受けたときの処理
+        public void TakeHeal(int heal) // 回復処理
         {
-            currentHp += heal; // ダメージ分HPを減らす
+            currentHp += heal; // 回復分HPを増やす
+            if (currentHp > maxHp)
+            {
+                currentHp = maxHp; // 最大HPを超えないように
+            }
             UpdateHpUI(); // HP画像の更新をする
-            Debug.Log("回復した");
+            Debug.Log($"回復した: +{heal} HP");
         }
 
         private void UpdateHpUI() // HP画像が減る表示系の関数

@@ -47,6 +47,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Map.MapGenerator
   _mapData: {fileID: 11400000, guid: 96184afe74e6ab243aa54e34a5fac902, type: 2}
   _tileParent: {fileID: 6445583194033504140}
+--- !u!1 &1187459109720556663
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8393316903684418220}
+  - component: {fileID: 5242796932893803490}
+  m_Layer: 0
+  m_Name: PlayerStatus
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8393316903684418220
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187459109720556663}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 7.005, z: -5.3250003}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 522301552625959696}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5242796932893803490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187459109720556663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 366202250b4cd374baa98bb27f5aaf36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Player.PlayerStatus
+  maxHp: 10
+  hpImages: []
 --- !u!1 &1296366869040001345
 GameObject:
   m_ObjectHideFlags: 0
@@ -412,6 +458,37 @@ Transform:
   - {fileID: 3160584128954061835}
   m_Father: {fileID: 479347146131005837}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5146039855401788947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6178925065671572365}
+  m_Layer: 0
+  m_Name: Items
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6178925065671572365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5146039855401788947}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.16531, y: 1.5461202, z: -0.65180004}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 522301552625959696}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6112358882021009041
 GameObject:
   m_ObjectHideFlags: 0
@@ -496,6 +573,8 @@ Transform:
   - {fileID: 1778546823388324959}
   - {fileID: 2148494867506528693}
   - {fileID: 7260058926040644572}
+  - {fileID: 8393316903684418220}
+  - {fileID: 6178925065671572365}
   - {fileID: 479347146131005837}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -524,6 +603,7 @@ GameObject:
   - component: {fileID: 299349989074889825}
   - component: {fileID: 4699815047313841026}
   - component: {fileID: 4412177763179591662}
+  - component: {fileID: 370397203155322648}
   m_Layer: 0
   m_Name: TestPlayer
   m_TagString: Untagged
@@ -610,11 +690,24 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8964976298018291680}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 444f0f2356353d04984dda0a27d45ec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Player.TestPlayerMover
+  _startGridPos: {x: 0, y: 0}
+--- !u!114 &370397203155322648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8964976298018291680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2115b337ab562a042964dc99cd6daf94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Player.PlayerMover
   _startGridPos: {x: 0, y: 0}
 --- !u!1001 &23386685607001297
 PrefabInstance:

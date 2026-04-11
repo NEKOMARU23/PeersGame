@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TechC.InGame.Core;
 using TechC.InGame.Log;
+using System;//
 
 namespace TechC.InGame.Player
 {
@@ -16,6 +17,9 @@ namespace TechC.InGame.Player
         private Vector2Int _currentGridPos;
 
         private float _placementY;
+
+        /// <summary>タイルに到達した時のイベント</summary>
+        public static event Action<Map.TileData> OnTileReached;//
 
         private void Start()
         {
@@ -99,6 +103,9 @@ namespace TechC.InGame.Player
             var tile = mapManager.GetTile(_currentGridPos);
             var tilePos = tile.TileObject.transform.position;
             transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
+            
+            // タイルに到達したことを通知
+            OnTileReached?.Invoke(tile);//
         }
     }
 }
