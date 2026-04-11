@@ -31,6 +31,9 @@ namespace TechC.Audio
         private AudioSource _bgmSource;
         private string _currentBGMName;
         private Coroutine _bgmFadeCoroutine;
+        // BGM の開始 dspTime（BeatTimer と同期するため）
+        public float CurrentBgmStartDspTime { get; private set; }
+
 
         // SE用
         private List<AudioSource> _seSources = new List<AudioSource>();
@@ -44,6 +47,38 @@ namespace TechC.Audio
         // 一時停止状態
         private bool _isBGMPaused = false;
         private List<AudioSource> _pausedSESources = new List<AudioSource>();
+        /// <summary>
+        /// グローバルな AudioManager インスタンスへの参照。
+        /// シーンを跨いで単一インスタンスを維持するために使用します。
+        /// Awake で初期化され、以降は AudioManager.Instance でアクセスしてください。
+        /// </summary>
+        public static AudioManager Instance { get; private set; }
+        /// <summary>
+        /// Awake 時の初期化処理
+        /// - base.Awake() を呼んで親クラス（Singleton）の初期化を尊重します
+        /// - 既存インスタンスが無ければこのインスタンスを登録し、DontDestroyOnLoad を適用します
+        /// - 既に別インスタンスが存在する場合は重複を避けるため自身を破棄します
+        /// </summary>
+        protected override void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (_bgmSource == null)
+            {
+                _bgmSource = gameObject.AddComponent<AudioSource>();
+                _bgmSource.playOnAwake = false;
+                _bgmSource.loop = true;
+            }
+        }
 
         protected override void OnInitialize()
         {
@@ -129,6 +164,21 @@ namespace TechC.Audio
             {
                 PlayBGMInternal(bgmData);
             }
+        }
+        /// <summary>
+        /// BGM を DSP 時刻で予約再生し、BeatTimer と同期できるよう開始時刻を返す
+        /// </summary>
+        public float PlayBgmScheduled(AudioClip clip, float delaySec = 0.1f)
+        {
+            if (clip == null) return (float)AudioSettings.dspTime;
+
+            float startTime = (float)AudioSettings.dspTime + delaySec;
+
+            _bgmSource.clip = clip;
+            _bgmSource.PlayScheduled(startTime); // float のまま渡す
+
+            CurrentBgmStartDspTime = startTime;
+            return startTime;
         }
 
         /// <summary>

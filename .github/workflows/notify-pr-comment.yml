@@ -1,0 +1,53 @@
+name: Notify Discord on PR Comment
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify:
+    if: github.event.issue.pull_request != null || github.event_name != 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PR_COMMENT }}
+          # 文字列を環境変数として渡す（${{ }} を直接スクリプト内に書くとインジェクションの危険があるため）
+          RAW_BODY: ${{ github.event.comment.body || github.event.review.body }}
+          URL: ${{ github.event.comment.html_url || github.event.review.html_url }}
+          AUTHOR: ${{ github.event.sender.login }}
+        run: |
+          # 空チェック
+          if [ -z "$RAW_BODY" ]; then
+            echo "Empty comment, skipping."
+            exit 0
+          fi
+
+          # 2000文字制限しつつ、改行や特殊文字をJSON安全な形式に変換
+          # jqの --arg は自動的にエスケープ処理を行ってくれます
+          SAFE_BODY=$(echo "$RAW_BODY" | cut -c 1-2000)
+
+          PAYLOAD=$(jq -n \
+            --arg title "💬 PRにコメントが届きました" \
+            --arg desc "$SAFE_BODY" \
+            --arg author "$AUTHOR" \
+            --arg url_text "[コメントを見る]($URL)" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5814783,
+                author: { name: $author },
+                fields: [
+                  { name: "リンク", value: $url_text, inline: false }
+                ]
+              }]
+            }')
+
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
