@@ -16,18 +16,28 @@ namespace TechC.InGame.ObjectPool
 #if UNITY_EDITOR
         [SerializeField] private bool _autoExpand = true;
         [SerializeField] private int _expandSize = 5;
+        
 #endif
 
         private Dictionary<GameObject, Queue<GameObject>> _objectPools = new Dictionary<GameObject, Queue<GameObject>>();
-        
+
         private Dictionary<string, GameObject> _prefabNameToOriginalPrefab = new Dictionary<string, GameObject>();
 
         private Dictionary<GameObject, ObjectPoolItem> _instanceToPoolItemMap = new Dictionary<GameObject, ObjectPoolItem>();
 
+        public static ObjectPoolManager Instance;
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+
             InitializeAllPools();
         }
+
 
         /// <summary>
         /// すべてのプールを初期化します
@@ -50,7 +60,7 @@ namespace TechC.InGame.ObjectPool
 
                 if (poolItem.Parent == null)
                 {
-                 poolItem.Parent = this.gameObject.transform;
+                    poolItem.Parent = this.gameObject.transform;
                 }
 
                 InitializePool(poolItem);
@@ -73,7 +83,7 @@ namespace TechC.InGame.ObjectPool
             {
                 _objectPools[poolItem.Prefab] = new Queue<GameObject>();
             }
-            
+
             string prefabName = poolItem.Prefab.name.Replace("(Clone)", "").Trim();
             if (!_prefabNameToOriginalPrefab.ContainsKey(prefabName))
                 _prefabNameToOriginalPrefab[prefabName] = poolItem.Prefab;
@@ -132,7 +142,7 @@ namespace TechC.InGame.ObjectPool
                 return;
             }
 
-            ObjectPoolItem newItem = new ObjectPoolItem(name, prefab, parent ? parent : this.gameObject.transform,initialSize);
+            ObjectPoolItem newItem = new ObjectPoolItem(name, prefab, parent ? parent : this.gameObject.transform, initialSize);
             _poolItems.Add(newItem);
             InitializePool(newItem);
         }
@@ -149,10 +159,10 @@ namespace TechC.InGame.ObjectPool
                 Debug.LogError("❌ [ObjectPool] nullのプレハブからオブジェクトを取得できません。");
                 return null;
             }
-            
+
             // まずInstanceIDで検索
             GameObject actualPrefab = prefab;
-            
+
             // InstanceIDで見つからない場合、名前で検索
             if (!_objectPools.ContainsKey(prefab))
             {
@@ -178,11 +188,11 @@ namespace TechC.InGame.ObjectPool
                 }
 
                 pooledObject.SetActive(true);
-                
+
                 // IPoolable インターフェースをサポート
                 var poolable = pooledObject.GetComponent<IPoolable>();
                 poolable?.OnPoolGet();
-                
+
                 return pooledObject;
             }
             else
@@ -206,17 +216,17 @@ namespace TechC.InGame.ObjectPool
                     // プール自動拡張（リリースビルド用固定設定）
                     ExpandPool(poolItem, 5);
 #endif
-                    
+
                     // 拡張後に再度オブジェクトを取得
                     if (_objectPools[actualPrefab].Count > 0)
                     {
                         GameObject pooledObject = _objectPools[actualPrefab].Dequeue();
                         pooledObject.SetActive(true);
-                        
+
                         // IPoolable インターフェースをサポート
                         var poolable = pooledObject.GetComponent<IPoolable>();
                         poolable?.OnPoolGet();
-                        
+
                         return pooledObject;
                     }
 
@@ -327,7 +337,7 @@ namespace TechC.InGame.ObjectPool
 
                 if (_objectPools.ContainsKey(poolItem.Prefab))
                 {
-                   _objectPools[poolItem.Prefab].Enqueue(obj);
+                    _objectPools[poolItem.Prefab].Enqueue(obj);
                 }
                 else
                 {
@@ -395,7 +405,7 @@ namespace TechC.InGame.ObjectPool
         {
             _poolItems.Add(item);
         }
-        
+
         /// <summary>
         /// 全てのプール内の非アクティブオブジェクトに任意の処理を実行します
         /// </summary>
@@ -432,8 +442,8 @@ namespace TechC.InGame.ObjectPool
         /// <returns>エフェクト系のオブジェクトをサポートしている場合はtrue</returns>
         public bool IsEffectPool()
         {
-            return _poolItems.Exists(item => 
-                item.Name.Contains("Effect") || 
+            return _poolItems.Exists(item =>
+                item.Name.Contains("Effect") ||
                 (item.Prefab != null && item.Prefab.name.Contains("Effect"))
             );
         }
@@ -444,8 +454,8 @@ namespace TechC.InGame.ObjectPool
         /// <returns>プロジェクタイル系のオブジェクトをサポートしている場合はtrue</returns>
         public bool IsProjectilePool()
         {
-            return _poolItems.Exists(item => 
-                item.Name.Contains("Projectile") || 
+            return _poolItems.Exists(item =>
+                item.Name.Contains("Projectile") ||
                 (item.Prefab != null && item.Prefab.name.Contains("Projectile"))
             );
         }
