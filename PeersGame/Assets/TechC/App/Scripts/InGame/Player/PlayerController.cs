@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TechC.InGame.Log;
 
 namespace TechC.InGame.Player
 {
@@ -24,7 +25,7 @@ namespace TechC.InGame.Player
             _currentHp = _maxHp;
             if (_hpImages.Length != _maxHp)
             {
-                Debug.LogError("HP画像の数がmaxHpと一致しません。UIが正しく表示されない可能性があります。");
+                CusLog.Error("HP画像の数がmaxHpと一致しません。UIが正しく表示されない可能性があります。");
             }
         }
 
@@ -35,7 +36,7 @@ namespace TechC.InGame.Player
             if (_currentHp <= 0)
             {
                 // HPが0になったときの処理（例: ゲームオーバー）
-                Debug.Log("プレイヤーが死亡しました。");
+                CusLog.Log("プレイヤーが死亡しました。");
             }
         }
 
@@ -47,7 +48,7 @@ namespace TechC.InGame.Player
                 _currentHp = _maxHp; // 最大HPを超えないように
             }
             UpdateHpUI(); // HP画像の更新をする
-            Debug.Log($"回復した: +{heal} HP");
+            CusLog.Log($"回復した: +{heal} HP");
         }
 
         private void UpdateHpUI() // HP画像が減る表示系の関数

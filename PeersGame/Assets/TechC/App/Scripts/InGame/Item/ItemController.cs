@@ -77,12 +77,12 @@ namespace TechC.InGame.Item
             tile.IsItem = true;
             tile.ItemObject = itemObject;
             _itemTiles.Add(tile);
-            Debug.Log($"[ItemController] アイテム生成 タイル={tile.GridPosition} IsItem={tile.IsItem}");
+            CusLog.Log($"[ItemController] アイテム生成 タイル={tile.GridPosition} IsItem={tile.IsItem}");
         }
 
         private void HandleTileReached(TileData tile)
         {
-            Debug.Log($"[ItemController] HandleTileReached 呼び出し タイル={tile?.GridPosition} IsItem={tile?.IsItem}");
+            CusLog.Log($"[ItemController] HandleTileReached 呼び出し タイル={tile?.GridPosition} IsItem={tile?.IsItem}");
             if (tile == null || !tile.IsItem) return;
             CollectItem(tile);
         }
@@ -104,7 +104,7 @@ namespace TechC.InGame.Item
         {
             if (PlayerController.I == null)
             {
-                CusLog.Warning("[ItemController] PlayerStatus が取得できませんでした。回復効果を適用できません。");
+                CusLog.Warning("[ItemController] PlayerController が取得できませんでした。回復効果を適用できません。");
                 return;
             }
 
