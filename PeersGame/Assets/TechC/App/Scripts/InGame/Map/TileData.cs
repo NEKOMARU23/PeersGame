@@ -16,6 +16,12 @@ namespace TechC.InGame.Map
         /// <summary>歩行可能かどうか（将来の拡張用）</summary>
         public bool IsWalkable { get; set; } = true;
 
+        /// <summary>アイテムがついているかどうか</summary>
+        public bool IsItem { get; set; } = false;//
+
+        /// <summary>タイルに付随したアイテムのGameObject</summary>
+        public GameObject ItemObject { get; set; }//
+
         /// <summary>グリッド座標と対応するGameObjectを指定して初期化する</summary>
         public TileData(Vector2Int gridPosition, GameObject tileObject)
         {
