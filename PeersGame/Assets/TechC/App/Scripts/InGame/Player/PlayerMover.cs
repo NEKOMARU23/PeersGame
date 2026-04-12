@@ -104,6 +104,8 @@ namespace TechC.InGame.Player
             var tilePos = tile.TileObject.transform.position;
             transform.position = new Vector3(tilePos.x, _placementY, tilePos.z);
             
+            InGameManager.I.ScoreManager.AddMoveSuccessScore();
+            
             // タイルに到達したことを通知
             OnTileReached?.Invoke(tile);//
         }

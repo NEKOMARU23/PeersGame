@@ -167,10 +167,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5242796932893803490, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
-      propertyPath: hpImages.Array.size
-      value: 10
-      objectReference: {fileID: 0}
     - target: {fileID: 7588719000719861450, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
       propertyPath: m_Name
       value: InGame

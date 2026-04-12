@@ -11,6 +11,7 @@ namespace TechC.InGame.UI
     public class ScoreRenderer : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI _scoreText;
+        [SerializeField] private string _scoreLabel = "スコア  ";
 
         private void OnEnable()
         {
@@ -31,7 +32,7 @@ namespace TechC.InGame.UI
 
         private void UpdateDisplay(int score)
         {
-            _scoreText.text = score.ToString();
+            _scoreText.text = _scoreLabel + score.ToString();
 
             // 将来的には音楽が終了したらこの処理を呼ぶ
             // GameManager.I.SetFinalScore(score);
