@@ -3,14 +3,15 @@ using UnityEngine.UI;
 
 namespace TechC.InGame.Player
 {
-    public class PlayerStatus : MonoBehaviour
+    //public class PlayerController : Singleton<PlayerController>  
+    public class PlayerController : MonoBehaviour
     {
-        public static PlayerStatus I { get; private set; }
+        public static PlayerController I { get; private set; }
 
         [Header("HPの設定")]
-        [SerializeField] private int maxHp = 10; // 最大の体力の値
-        [SerializeField] private Image[] hpImages; // HPの画像
-        private int currentHp; // 現在の体力の値
+        [SerializeField] private int _maxHp = 10; // 最大の体力の値
+        [SerializeField] private Image[] _hpImages; // HPの画像
+        private int _currentHp; // 現在の体力の値
 
         private void Awake()
         {
@@ -20,24 +21,18 @@ namespace TechC.InGame.Player
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-            currentHp = maxHp;
-            if (hpImages.Length != maxHp)
+            _currentHp = _maxHp;
+            if (_hpImages.Length != _maxHp)
             {
                 Debug.LogError("HP画像の数がmaxHpと一致しません。UIが正しく表示されない可能性があります。");
             }
         }
 
-        // Update is called once per frame
-        void Update()
-        {
-            // 必要に応じて更新処理を追加
-        }
-
         public void TakeDamage(int damage) // ダメージを受けたときの処理
         {
-            currentHp -= damage; // ダメージ分HPを減らす
+            _currentHp -= damage; // ダメージ分HPを減らす
             UpdateHpUI(); // HP画像の更新をする
-            if (currentHp <= 0)
+            if (_currentHp <= 0)
             {
                 // HPが0になったときの処理（例: ゲームオーバー）
                 Debug.Log("プレイヤーが死亡しました。");
@@ -46,10 +41,10 @@ namespace TechC.InGame.Player
 
         public void TakeHeal(int heal) // 回復処理
         {
-            currentHp += heal; // 回復分HPを増やす
-            if (currentHp > maxHp)
+            _currentHp += heal; // 回復分HPを増やす
+            if (_currentHp > _maxHp)
             {
-                currentHp = maxHp; // 最大HPを超えないように
+                _currentHp = _maxHp; // 最大HPを超えないように
             }
             UpdateHpUI(); // HP画像の更新をする
             Debug.Log($"回復した: +{heal} HP");
@@ -57,9 +52,9 @@ namespace TechC.InGame.Player
 
         private void UpdateHpUI() // HP画像が減る表示系の関数
         {
-            for (int i = 0; i < hpImages.Length; i++)
+            for (int i = 0; i < _hpImages.Length; i++)
             {
-                hpImages[i].enabled = i < currentHp;
+                _hpImages[i].enabled = i < _currentHp;
             }
         }
     }

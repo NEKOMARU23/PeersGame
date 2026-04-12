@@ -59,19 +59,11 @@ namespace TechC.InGame.Item
         {
             if (_mapManager == null) return;
 
-            for (int attempts = 0; attempts < 50; attempts++)
-            {
-                var randomPos = new Vector2Int(
-                    Random.Range(0, _mapManager.Columns),
-                    Random.Range(0, _mapManager.Rows)
-                );
+            var candidateTiles = _mapManager.GetWalkableEmptyTiles();
+            if (candidateTiles.Count == 0) return;
 
-                var tile = _mapManager.GetTile(randomPos);
-                if (tile == null || !tile.IsWalkable || tile.IsItem) continue;
-
-                SpawnItemOnTile(tile);
-                return;
-            }
+            var randomIndex = Random.Range(0, candidateTiles.Count);
+            SpawnItemOnTile(candidateTiles[randomIndex]);
         }
 
         private void SpawnItemOnTile(TileData tile)
@@ -110,13 +102,13 @@ namespace TechC.InGame.Item
 
         private void ApplyItemEffect(TileData tile)
         {
-            if (PlayerStatus.I == null)
+            if (PlayerController.I == null)
             {
                 CusLog.Warning("[ItemController] PlayerStatus が取得できませんでした。回復効果を適用できません。");
                 return;
             }
 
-            PlayerStatus.I.TakeHeal(_healAmount);
+            PlayerController.I.TakeHeal(_healAmount);
             CusLog.Log($"[ItemController] アイテムを取得しました: {tile.GridPosition} / HP+{_healAmount}");
         }
     }
