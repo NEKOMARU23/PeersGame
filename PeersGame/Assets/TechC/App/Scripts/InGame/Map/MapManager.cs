@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TechC.InGame.Map
@@ -51,6 +52,29 @@ namespace TechC.InGame.Map
         {
             if (!IsValidPosition(pos)) return null;
             return _tiles[pos.y, pos.x];
+        }
+
+        /// <summary>
+        /// 歩行可能かつアイテム未配置のタイル一覧を取得する
+        /// </summary>
+        public List<TileData> GetWalkableEmptyTiles()
+        {
+            var walkableEmptyTiles = new List<TileData>();
+
+            for (int y = 0; y < Rows; y++)
+            {
+                for (int x = 0; x < Columns; x++)
+                {
+                    var tile = _tiles[y, x];
+                    if (tile == null) continue;
+                    if (!tile.IsWalkable) continue;
+                    if (tile.IsItem) continue;
+
+                    walkableEmptyTiles.Add(tile);
+                }
+            }
+
+            return walkableEmptyTiles;
         }
     }
 }
