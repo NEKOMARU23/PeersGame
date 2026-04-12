@@ -171,6 +171,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: InGame
       objectReference: {fileID: 0}
+    - target: {fileID: 8736795020193317500, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
+      propertyPath: m_text
+      value: "\u30B9\u30B3\u30A2"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8736795020193317500, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 1db358e40f7879b419f1997d0cef3761, type: 2}
+    - target: {fileID: 8736795020193317500, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2676876285942462650, guid: 1db358e40f7879b419f1997d0cef3761, type: 2}
+    - target: {fileID: 8736795020193317500, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
