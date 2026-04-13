@@ -24,8 +24,13 @@ namespace TechC.Audio
 
             Instance = this;
         }
- 
-        public void Start(float bpm, float delaySec = 0f)
+
+        private void Start()
+        {
+            // Unity が呼ぶ Start
+        }
+
+        public void Begin(float bpm, float delaySec = 0f)
         {
             _bpm = bpm;
             _startDspTime = (float)AudioSettings.dspTime + delaySec;
