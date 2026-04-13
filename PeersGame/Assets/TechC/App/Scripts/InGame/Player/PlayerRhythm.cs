@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TechC.Rhythm;
 using TechC.InGame.Log;
+using TechC.InGame.Core;
+using TechC.InGame.Score;
 
 namespace TechC.InGame.Player
 {
-    public class PlayerRhyfhm : MonoBehaviour
+    public class PlayerRhythm : MonoBehaviour
     {
         [SerializeField] private MoveRhythmController _moveRhythmController;
         [SerializeField, Min(0f)] private float _timingWindowSec = 0.2f;
@@ -23,7 +25,7 @@ namespace TechC.InGame.Player
 
             if (!_moveRhythmController.IsRunning)
             {
-                CusLog.LogWarning("[PlayerRhyfhm] 判定スキップ: MoveRhythmController が未開始 (StartMoveRhythm 未呼び出し)");
+                CusLog.Warning("[PlayerRhyfhm] 判定スキップ: MoveRhythmController が未開始 (StartMoveRhythm 未呼び出し)");
                 return;
             }
 
@@ -31,10 +33,12 @@ namespace TechC.InGame.Player
             {
                 CusLog.Log("[PlayerRhyfhm] タイミング失敗");
                 PlayerController.I?.TakeDamage(_timingMissDamage);
+                InGameManager.I?.ScoreManager.SubMoveFailScore();
                 return;
             }
 
             CusLog.Log("[PlayerRhyfhm] タイミング成功");
+            InGameManager.I?.ScoreManager.AddMoveSuccessScore();
         }
 
         private bool HasMoveInputThisFrame()

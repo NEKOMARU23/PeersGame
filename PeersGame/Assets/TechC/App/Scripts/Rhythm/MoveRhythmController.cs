@@ -6,7 +6,6 @@ namespace TechC.Rhythm
     /// <summary>
     /// 移動フェーズのリズム制御（クリック音＋移動BGM）
     /// </summary>
-    using UnityEngine;
 
 public class MoveRhythmController : MonoBehaviour
 {
