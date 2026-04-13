@@ -42,22 +42,41 @@ namespace TechC.InGame.Notes
         {
             float diff = Mathf.Abs(transform.position.x - _judgeX);
 
+            bool isSuccess = false;
+
             if (diff <= _perfectRange)
             {
                 Debug.Log("PERFECT!");
-                GameObject attackEffect = _effectPool.GetObject(_attackEffect);
+                isSuccess = true;
             }
             else if (diff <= _goodRange)
             {
                 Debug.Log("GOOD!");
-                GameObject attackEffect = _effectPool.GetObject(_attackEffect);
+                isSuccess = true;
             }
             else
             {
                 Debug.Log("MISS!");
             }
 
+            // ★ 成功したときだけエフェクトを出す
+            if (isSuccess)
+            {
+                if (_data.Type == NoteType.Attack)
+                {
+                    // 攻撃ノーツ用エフェクト
+                    _effectPool.GetObject(_attackEffect);
+                }
+                else
+                {
+                    // 防御ノーツ用エフェクト
+                    _effectPool.GetObject(_deffenceEffct);
+                }
+            }
+
             _isActive = false;
+            _effectPool.transform.position = transform.position;
+
             ObjectPoolManager.Instance.ReturnObject(gameObject);
         }
     }
