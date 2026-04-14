@@ -4,20 +4,21 @@ using TechC.Audio;
 
 namespace TechC.InGame.Notes
 {
-
     /// <summary>
-    /// ノーツの動きや判定を管理するクラス
+    /// ノーツの動きやエフェクト演出を担当するクラス
+    /// 判定ロジックは NoteSpawner が一括管理する
     /// </summary>
     public class NoteController : MonoBehaviour
     {
+        // プロパティを公開して NoteSpawner から Data にアクセスできるようにする
+        public NoteData Data => _data;
         private NoteData _data;
+        
         private bool _isActive = false;
 
         [Header("Settings")]
         [SerializeField] private float _judgeX = 0f;
         [SerializeField] private float _startX = 15f;
-        [SerializeField] private float _perfectRange = 0.2f;
-        [SerializeField] private float _goodRange = 0.5f;
 
         [Header("Effects (Optional)")]
         [SerializeField] private ObjectPoolManager _effectPool;
@@ -27,7 +28,6 @@ namespace TechC.InGame.Notes
         /// <summary>
         /// ノーツを初期化して出現させる
         /// </summary>
-        /// <param name="data"></param>
         public void Initialize(NoteData data)
         {
             _data = data;
@@ -39,70 +39,65 @@ namespace TechC.InGame.Notes
                 _effectPool = ObjectPoolManager.Instance;
             }
 
-            Debug.Log($"Note Initialized: TargetBeat {data.TargetBeat}");
+            // Debug.Log($"Note Initialized: TargetBeat {data.TargetBeat}");
         }
 
         private void Update()
         {
+            // 移動処理
             if (!_isActive || _data == null || BeatTimer.Instance == null) return;
 
             float currentBeat = BeatTimer.Instance.GetCurrentBeat();
+            
+            // 生成からターゲットまでの時間(拍)
             float duration = _data.TargetBeat - _data.SpawnBeat;
+            if (duration <= 0) return;
+
+            // 進捗率を計算 (0 = StartX, 1 = JudgeX)
             float progress = (currentBeat - _data.SpawnBeat) / duration;
 
             float x = Mathf.Lerp(_startX, _judgeX, progress);
             transform.position = new Vector3(x, transform.position.y, transform.position.z);
 
-            if (currentBeat >= _data.TargetBeat + 0.1f)
-            {
-                Judge();
-            }
+            // 自己判定(Judge())は NoteSpawner 側で行うため、ここでは行わない
         }
 
         /// <summary>
-        /// 判定処理。成功ならエフェクトを出してスコア加算、失敗ならMISS表示など。
+        /// 判定成功時のエフェクト生成とオブジェクト回収
         /// </summary>
-        public void Judge()
+        /// <param name="isMiss">Miss判定の場合はエフェクトを出さない</param>
+        public void OnJudged(bool isMiss)
         {
             if (!_isActive) return;
 
-            float diff = Mathf.Abs(transform.position.x - _judgeX);
-            bool isSuccess = false;
-
-            if (diff <= _perfectRange)
+            if (!isMiss)
             {
-                Debug.Log("<color=yellow>PERFECT!</color>");
-                isSuccess = true;
-            }
-            else if (diff <= _goodRange)
-            {
-                Debug.Log("<color=green>GOOD!</color>");
-                isSuccess = true;
-            }
-            else
-            {
-                Debug.Log("<color=red>MISS!</color>");
-            }
-
-            if (isSuccess)
-            {
-                GameObject effectPrefab = (_data.Type == NoteType.Attack) ? _attackEffect : _defenseEffect;
-
-                if (effectPrefab != null && _effectPool != null)
-                {
-                    GameObject effect = _effectPool.GetObject(effectPrefab);
-                    if (effect != null)
-                    {
-                        effect.transform.position = transform.position;
-                    }
-                }
+                PlayHitEffect();
             }
 
             _isActive = false;
 
+            // プールに返却
             if (ObjectPoolManager.Instance != null)
             {
                 ObjectPoolManager.Instance.ReturnObject(gameObject);
+            }
+        }
+
+        /// <summary>
+        /// 判定に合わせたエフェクトを再生
+        /// </summary>
+        private void PlayHitEffect()
+        {
+            GameObject effectPrefab = (_data.Type == NoteType.Attack) ? _attackEffect : _defenseEffect;
+
+            if (effectPrefab != null && _effectPool != null)
+            {
+                GameObject effect = _effectPool.GetObject(effectPrefab);
+                if (effect != null)
+                {
+                    effect.transform.position = transform.position;
+                }
             }
         }
     }
