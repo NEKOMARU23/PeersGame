@@ -1,4 +1,5 @@
 using UnityEngine;
+using TechC.InGame.Enemy;
 
 namespace TechC.InGame.Map
 {
@@ -21,6 +22,9 @@ namespace TechC.InGame.Map
 
         /// <summary>タイルに付随したアイテムのGameObject</summary>
         public GameObject ItemObject { get; set; }//
+
+        public bool IsEnemy => EnemyObject != null;
+        public EnemyDataOnTile EnemyObject { get; set; }
 
         /// <summary>グリッド座標と対応するGameObjectを指定して初期化する</summary>
         public TileData(Vector2Int gridPosition, GameObject tileObject)

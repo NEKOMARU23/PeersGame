@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TechC.InGame.Enemy;
 
 namespace TechC.InGame.Map
 {
@@ -52,6 +53,17 @@ namespace TechC.InGame.Map
         {
             if (!IsValidPosition(pos)) return null;
             return _tiles[pos.y, pos.x];
+        }
+
+        /// <summary>
+        /// 指定座標に敵がいるかどうかを返す
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        public EnemyDataOnTile GetEnemyAt(Vector2Int pos)
+        {
+            var tile = GetTile(pos);
+            return tile?.EnemyObject;
         }
 
         /// <summary>
