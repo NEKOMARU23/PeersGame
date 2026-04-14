@@ -21,16 +21,17 @@ namespace TechC.InGame.Item
         private void Start()
         {
             _mapManager = InGame.Core.InGameManager.I?.MapManager;
+            
             if (_mapManager == null)
             {
-                CusLog.Warning("[ItemController] MapManager が取得できませんでした。ItemController を有効にするには InGameManager を正しく配置してください。");
+                CusLog.Warning("[ItemController] MapManager が取得できませんでした。");
                 enabled = false;
                 return;
             }
 
             if (_itemPrefab == null)
             {
-                CusLog.Warning("[ItemController] ItemPrefab がアサインされていません。アイテムは生成されません。");
+                CusLog.Warning("[ItemController] ItemPrefab がアサインされていません。");
                 enabled = false;
                 return;
             }
@@ -59,7 +60,14 @@ namespace TechC.InGame.Item
         {
             if (_mapManager == null) return;
 
-            var candidateTiles = _mapManager.GetWalkableEmptyTiles();
+            Vector2Int currentPlayerPos = Vector2Int.one * -1; // マップ外の初期値
+            if (PlayerController.I != null)
+            {
+                currentPlayerPos = PlayerController.I.CurrentGridPos;
+            }
+
+            var candidateTiles = _mapManager.GetWalkableEmptyTiles(currentPlayerPos);
+
             if (candidateTiles.Count == 0) return;
 
             var randomIndex = Random.Range(0, candidateTiles.Count);
@@ -77,12 +85,12 @@ namespace TechC.InGame.Item
             tile.IsItem = true;
             tile.ItemObject = itemObject;
             _itemTiles.Add(tile);
-            CusLog.Log($"[ItemController] アイテム生成 タイル={tile.GridPosition} IsItem={tile.IsItem}");
+            
+            CusLog.Log($"[ItemController] アイテム生成 タイル={tile.GridPosition} (プレイヤー・敵を回避)");
         }
 
         private void HandleTileReached(TileData tile)
         {
-            CusLog.Log($"[ItemController] HandleTileReached 呼び出し タイル={tile?.GridPosition} IsItem={tile?.IsItem}");
             if (tile == null || !tile.IsItem) return;
             CollectItem(tile);
         }
@@ -104,13 +112,12 @@ namespace TechC.InGame.Item
         {
             if (PlayerController.I == null)
             {
-                CusLog.Warning("[ItemController] PlayerController が取得できませんでした。回復効果を適用できません。");
+                CusLog.Warning("[ItemController] PlayerController が見つかりません。");
                 return;
             }
 
             PlayerController.I.TakeHeal(_healAmount);
-            CusLog.Log($"[ItemController] アイテムを取得しました: {tile.GridPosition} / HP+{_healAmount}");
+            CusLog.Log($"[ItemController] アイテム取得: {tile.GridPosition} / HP+{_healAmount}");
         }
     }
 }
-
