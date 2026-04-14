@@ -41,43 +41,47 @@ namespace TechC.InGame.Notes
         private void Judge()
         {
             float diff = Mathf.Abs(transform.position.x - _judgeX);
-
             bool isSuccess = false;
 
             if (diff <= _perfectRange)
             {
-                Debug.Log("PERFECT!");
+                Debug.Log("<color=yellow>PERFECT!</color>");
                 isSuccess = true;
             }
             else if (diff <= _goodRange)
             {
-                Debug.Log("GOOD!");
+                Debug.Log("<color=green>GOOD!</color>");
                 isSuccess = true;
             }
             else
             {
-                Debug.Log("MISS!");
+                Debug.Log("<color=red>MISS!</color>");
             }
 
-            // ★ 成功したときだけエフェクトを出す
             if (isSuccess)
             {
-                if (_data.Type == NoteType.Attack)
+                GameObject effectToSpawn = (_data.Type == NoteType.Attack) ? _attackEffect : _deffenceEffct;
+
+                if (effectToSpawn != null && _effectPool != null)
                 {
-                    // 攻撃ノーツ用エフェクト
-                    _effectPool.GetObject(_attackEffect);
+                    GameObject effect = _effectPool.GetObject(effectToSpawn);
+                    if (effect != null)
+                    {
+                        effect.transform.position = transform.position;
+                    }
                 }
                 else
                 {
-                    // 防御ノーツ用エフェクト
-                    _effectPool.GetObject(_deffenceEffct);
+                    Debug.LogWarning($"{_data.Type} のエフェクトプレハブが未設定です。生成をスキップします。");
                 }
             }
 
             _isActive = false;
-            _effectPool.transform.position = transform.position;
 
-            ObjectPoolManager.Instance.ReturnObject(gameObject);
+            if (ObjectPoolManager.Instance != null)
+            {
+                ObjectPoolManager.Instance.ReturnObject(gameObject);
+            }
         }
     }
 }
