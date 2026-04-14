@@ -151,7 +151,16 @@ MonoBehaviour:
   _notes:
   - TargetBeat: 4
     SpawnBeat: 0
+    Type: 1
+  - TargetBeat: 8
+    SpawnBeat: 4
     Type: 0
+  - TargetBeat: 12
+    SpawnBeat: 8
+    Type: 0
+  - TargetBeat: 16
+    SpawnBeat: 12
+    Type: 1
   _attackNotePrefab: {fileID: 7386204500267746381, guid: 28a9db5664bb8504598ee5e0de66d504, type: 3}
   _defenseNotePrefab: {fileID: 5378699318671802410, guid: c4a399a8db7cf3c4ca0f6b5e35309a23, type: 3}
 --- !u!4 &598795976
@@ -231,6 +240,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3733504724993859581, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1321713819}
+    - targetCorrespondingSourceObject: {fileID: 3733504724993859581, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1321713822}
   m_SourcePrefab: {fileID: 100100000, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
 --- !u!1 &1083613628
 GameObject:
@@ -361,6 +373,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43a0d55378471f946910a696589e9dfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.Audio.BeatTimer
+  _isRunning: 1
+  _bpm: 0
+  _currentBeatDisplay: 0
 --- !u!114 &1321713820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -384,6 +399,21 @@ MonoBehaviour:
     InitialSize: 1
   _autoExpand: 1
   _expandSize: 5
+--- !u!114 &1321713822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1321713817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e7ad376ede121d4390eca8dee6e1bd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.MusicGameManager
+  _audioSource: {fileID: 0}
+  _songBpm: 120
+  _startDelay: 2
 --- !u!114 &1766633696 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3518502808265626466, guid: 6eb75f521cd482a44922b392a820f12e, type: 3}
@@ -447,6 +477,10 @@ PrefabInstance:
       propertyPath: _mapGenerator
       value: 
       objectReference: {fileID: 1766633696}
+    - target: {fileID: 4318812215324868339, guid: c0afb2bdfd783ee49b597e165241e419, type: 3}
+      propertyPath: _isRunning
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5483510856199198549, guid: c0afb2bdfd783ee49b597e165241e419, type: 3}
       propertyPath: m_Name
       value: Managers
