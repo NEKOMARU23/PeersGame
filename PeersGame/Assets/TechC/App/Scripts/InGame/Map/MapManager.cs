@@ -58,8 +58,6 @@ namespace TechC.InGame.Map
         /// <summary>
         /// 指定座標に敵がいるかどうかを返す
         /// </summary>
-        /// <param name="pos"></param>
-        /// <returns></returns>
         public EnemyDataOnTile GetEnemyAt(Vector2Int pos)
         {
             var tile = GetTile(pos);
@@ -67,9 +65,10 @@ namespace TechC.InGame.Map
         }
 
         /// <summary>
-        /// 歩行可能かつアイテム未配置のタイル一覧を取得する
+        /// プレイヤー、アイテム、敵のいずれも存在しない「完全な空きタイル」のリストを取得する
         /// </summary>
-        public List<TileData> GetWalkableEmptyTiles()
+        /// <param name="playerPos">除外したいプレイヤーの現在座標</param>
+        public List<TileData> GetWalkableEmptyTiles(Vector2Int playerPos)
         {
             var walkableEmptyTiles = new List<TileData>();
 
@@ -78,9 +77,17 @@ namespace TechC.InGame.Map
                 for (int x = 0; x < Columns; x++)
                 {
                     var tile = _tiles[y, x];
+                    
+                    // 基本チェック
                     if (tile == null) continue;
                     if (!tile.IsWalkable) continue;
-                    if (tile.IsItem) continue;
+
+                    // オブジェクト重複チェック
+                    if (tile.IsItem) continue;           // アイテムがある場合はスキップ
+                    if (tile.EnemyObject != null) continue; // 敵がある場合はスキップ
+                    
+                    // プレイヤー座標チェック
+                    if (x == playerPos.x && y == playerPos.y) continue;
 
                     walkableEmptyTiles.Add(tile);
                 }
