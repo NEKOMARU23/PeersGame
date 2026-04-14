@@ -22,7 +22,7 @@ namespace TechC.InGame.Notes
         [Header("Effects (Optional)")]
         [SerializeField] private ObjectPoolManager _effectPool;
         [SerializeField] private GameObject _attackEffect;
-        [SerializeField] private GameObject _deffenceEffct;
+        [SerializeField] private GameObject _defenseEffect;
 
         /// <summary>
         /// ノーツを初期化して出現させる
@@ -86,7 +86,7 @@ namespace TechC.InGame.Notes
 
             if (isSuccess)
             {
-                GameObject effectPrefab = (_data.Type == NoteType.Attack) ? _attackEffect : _deffenceEffct;
+                GameObject effectPrefab = (_data.Type == NoteType.Attack) ? _attackEffect : _defenseEffect;
 
                 if (effectPrefab != null && _effectPool != null)
                 {
