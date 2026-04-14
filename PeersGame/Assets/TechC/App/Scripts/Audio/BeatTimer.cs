@@ -4,16 +4,18 @@ namespace TechC.Audio
 {
     public class BeatTimer : MonoBehaviour
     {
-        private float _bpm;
+        [Header("Status (Read Only)")]
+        [SerializeField] private bool _isRunning = false;
+        [SerializeField] private float _bpm;
+        [SerializeField] private float _currentBeatDisplay; // インスペクター確認用
+
         private float _startDspTime;
         private float _beatOffset;
-
-        private bool _isRunning = false;
         private float _pausedBeat = 0f;
 
         public bool IsRunning => _isRunning;
-
         public static BeatTimer Instance;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -21,13 +23,16 @@ namespace TechC.Audio
                 Destroy(gameObject);
                 return;
             }
-
             Instance = this;
         }
 
-        private void Start()
+        private void Update()
         {
-            // Unity が呼ぶ Start
+            // インスペクターで数字が動くのを確認するためだけの処理
+            if (_isRunning)
+            {
+                _currentBeatDisplay = GetCurrentBeat();
+            }
         }
 
         public void Begin(float bpm, float delaySec = 0f)
@@ -36,6 +41,7 @@ namespace TechC.Audio
             _startDspTime = (float)AudioSettings.dspTime + delaySec;
             _beatOffset = 0f;
             _isRunning = true;
+            Debug.Log($"<color=cyan>BeatTimer Started: BPM {bpm}</color>");
         }
 
         public void StartAtDspTime(float dspTime, float bpm)
