@@ -77,7 +77,7 @@ namespace TechC.InGame.Map
                 for (int x = 0; x < Columns; x++)
                 {
                     var tile = _tiles[y, x];
-                    
+
                     // 基本チェック
                     if (tile == null) continue;
                     if (!tile.IsWalkable) continue;
@@ -85,7 +85,7 @@ namespace TechC.InGame.Map
                     // オブジェクト重複チェック
                     if (tile.IsItem) continue;           // アイテムがある場合はスキップ
                     if (tile.EnemyObject != null) continue; // 敵がある場合はスキップ
-                    
+
                     // プレイヤー座標チェック
                     if (x == playerPos.x && y == playerPos.y) continue;
 
@@ -94,6 +94,22 @@ namespace TechC.InGame.Map
             }
 
             return walkableEmptyTiles;
+        }
+
+        /// <summary>
+        /// 指定座標の敵を削除し、タイルの情報をクリアする
+        /// </summary>
+        /// <param name="pos">消去したい敵のグリッド座標</param>
+        public void RemoveEnemyAt(Vector2Int pos)
+        {
+            TileData tile = GetTile(pos);
+
+            if (tile != null && tile.EnemyObject != null)
+            {
+                Object.Destroy(tile.EnemyObject.gameObject);
+
+                tile.EnemyObject = null;
+            }
         }
     }
 }

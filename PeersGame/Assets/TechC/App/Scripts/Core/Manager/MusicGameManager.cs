@@ -1,21 +1,34 @@
 using UnityEngine;
 using TechC.Audio;
-using TechC.Scene.Manager; // GameManagerにアクセスするため
+using TechC.Scene.Manager;
+using TechC.Core.Manager; // Singleton基底クラスのネームスペース
+using TechC.InGame.Notes;
 
 namespace TechC.InGame
 {
-    public class MusicGameManager : MonoBehaviour
+    public class MusicGameManager : Singleton<MusicGameManager>
     {
         [Header("Audio Settings")]
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private float _songBpm = 120f;
         [SerializeField] private float _startDelay = 2f;
 
-        private int _currentScore = 0; // 今回の演奏のスコア
+        private int _currentScore = 0;
 
-        private void Start()
+        protected override bool UseDontDestroyOnLoad => false;
+
+        /// <summary>
+        /// リズムゲームを最初から再生する
+        /// </summary>
+        public void PlayMusic()
         {
-            // 演奏開始！
+            if (_audioSource != null) _audioSource.Stop();
+
+            if (NoteSpawner.IsValid())
+            {
+                NoteSpawner.I.ResetSpawner();
+            }
+
             if (BeatTimer.Instance != null)
             {
                 BeatTimer.Instance.Begin(_songBpm, _startDelay);
@@ -23,15 +36,12 @@ namespace TechC.InGame
             }
         }
 
-        // 演奏終了時に呼ぶ
         public void FinishGame()
         {
-            // シーンをまたいでも消えない GameManager にスコアを預ける
             if (GameManager.I != null)
             {
                 GameManager.I.SetFinalScore(_currentScore);
             }
-            // ここでリザルトシーンへ遷移する処理などを書く
         }
     }
 }

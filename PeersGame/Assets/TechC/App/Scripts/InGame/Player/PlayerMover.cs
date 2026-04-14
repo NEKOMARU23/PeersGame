@@ -7,13 +7,23 @@ using System;
 
 namespace TechC.InGame.Player
 {
+    /// <summary>
+    /// プレイヤーの移動と座標管理を行うクラス
+    /// </summary>
     public class PlayerMover : MonoBehaviour
     {
+        public static PlayerMover I { get; private set; }
+
         [SerializeField] private Vector2Int _startGridPos;
         private Vector2Int _currentGridPos;
         private float _placementY;
 
         public static event Action<Map.TileData> OnTileReached;
+
+        private void Awake()
+        {
+            I = this;
+        }
 
         private void Start()
         {
@@ -87,6 +97,11 @@ namespace TechC.InGame.Player
             if (enemy != null)
             {
                 CusLog.Log($"[Encounter] 敵と遭遇！ 戦闘開始 (座標: {nextPos})");
+                
+                if (BattleManager.I != null)
+                {
+                    BattleManager.I.StartBattle(enemy);
+                }
                 return; 
             }
 
