@@ -1,61 +1,107 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TechC.InGame.Log;
+using System.Collections.Generic;
 
 namespace TechC.InGame.Player
 {
-    //public class PlayerController : Singleton<PlayerController>  
     public class PlayerController : MonoBehaviour
     {
         public static PlayerController I { get; private set; }
 
         [Header("HPの設定")]
-        [SerializeField] private int _maxHp = 10; // 最大の体力の値
-        [SerializeField] private Image[] _hpImages; // HPの画像
-        private int _currentHp; // 現在の体力の値
+        [SerializeField] private int _maxHp = 5;
+        [SerializeField] private int _currentHp;
+
+        [Header("UIの参照 (HealthUIの代わり)")]
+        [SerializeField] private GameObject _heartPrefab; // Assets内のプレハブを入れる
+        [SerializeField] private Transform _heartParent;  // HierarchyのParentを入れる
+
+        private List<GameObject> _heartList = new List<GameObject>();
+
+        public Vector2Int CurrentGridPos { get; set; } = Vector2Int.zero;
 
         private void Awake()
         {
             I = this;
+            // シーン内にPlayerが複数いるミスを防ぐ
+            CusLog.Log("PlayerController: Awake が実行されました。");
         }
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
             _currentHp = _maxHp;
-            if (_hpImages.Length != _maxHp)
-            {
-                CusLog.Error("HP画像の数がmaxHpと一致しません。UIが正しく表示されない可能性があります。");
-            }
+            CusLog.Log($"PlayerController: Start開始。初期HP: {_currentHp}");
+            
+            InitializeHpUI();
         }
 
-        public void TakeDamage(int damage) // ダメージを受けたときの処理
+        private void InitializeHpUI()
         {
-            _currentHp -= damage; // ダメージ分HPを減らす
-            UpdateHpUI(); // HP画像の更新をする
+            // --- 徹底チェック ---
+            if (_heartPrefab == null)
+            {
+                CusLog.Error("【重要】Heart Prefab がインスペクターで設定されていません！");
+                return;
+            }
+            if (_heartParent == null)
+            {
+                CusLog.Error("【重要】Heart Parent (親オブジェクト) が設定されていません！");
+                return;
+            }
+
+            // 既存クリア
+            foreach (var h in _heartList) if(h != null) Destroy(h);
+            _heartList.Clear();
+
+            // 生成ループ
+            for (int i = 0; i < _maxHp; i++)
+            {
+                GameObject heart = Instantiate(_heartPrefab, _heartParent);
+                
+                // 生成されたオブジェクトがどこに飛んでいったか追跡
+                if (heart != null)
+                {
+                    heart.name = $"Heart_{i}";
+                    _heartList.Add(heart);
+                }
+            }
+
+            CusLog.Log($"{_heartList.Count} 個のハートを生成しました。Parent: {_heartParent.name}");
+        }
+
+        public void TakeDamage(int damage)
+        {
+            _currentHp -= damage;
+            CusLog.Log($"プレイヤーがダメージを受けた！ 残りHP: {_currentHp}");
+            
+            UpdateHpUI();
+
             if (_currentHp <= 0)
             {
-                // HPが0になったときの処理（例: ゲームオーバー）
+                _currentHp = 0;
                 CusLog.Log("プレイヤーが死亡しました。");
             }
         }
 
-        public void TakeHeal(int heal) // 回復処理
+        public void TakeHeal(int heal)
         {
-            _currentHp += heal; // 回復分HPを増やす
-            if (_currentHp > _maxHp)
-            {
-                _currentHp = _maxHp; // 最大HPを超えないように
-            }
-            UpdateHpUI(); // HP画像の更新をする
+            _currentHp += heal;
+            if (_currentHp > _maxHp) _currentHp = _maxHp;
+            
+            UpdateHpUI();
             CusLog.Log($"回復した: +{heal} HP");
         }
 
-        private void UpdateHpUI() // HP画像が減る表示系の関数
+        private void UpdateHpUI()
         {
-            for (int i = 0; i < _hpImages.Length; i++)
+            for (int i = 0; i < _heartList.Count; i++)
             {
-                _hpImages[i].enabled = i < _currentHp;
+                if (_heartList[i] != null)
+                {
+                    // 現在のHPより小さいインデックスのハートを表示
+                    _heartList[i].SetActive(i < _currentHp);
+                }
             }
         }
     }
