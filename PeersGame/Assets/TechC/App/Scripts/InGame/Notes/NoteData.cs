@@ -27,18 +27,18 @@ namespace TechC.InGame.Notes
         [Tooltip("ノーツのタイプ")]
         public NoteType Type;
 
+        [Tooltip("フレーズの最後として精算処理を行うか")]
+        public bool IsResolutionTrigger;
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="targetBeat">叩くべき拍</param>
-        /// <param name="type">種類</param>
-        /// <param name="preSpawnBeats">出現から判定まで何拍かけるか（デフォルト4拍）</param>
-        public NoteData(float targetBeat, NoteType type, float preSpawnBeats = 4f)
+        public NoteData(float targetBeat, NoteType type, float preSpawnBeats = 4f, bool isResolution = false)
         {
             TargetBeat = targetBeat;
             Type = type;
-            // 指定された拍数分だけ前に出現させる
             SpawnBeat = targetBeat - preSpawnBeats;
+            IsResolutionTrigger = isResolution;
         }
     }
 }
