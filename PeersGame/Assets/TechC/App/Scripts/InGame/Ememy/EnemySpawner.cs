@@ -12,26 +12,30 @@ namespace TechC.InGame.Enemy
         [SerializeField] private Transform _enemyParent;
 
         [Header("Spawn Height Offset")]
-        [SerializeField] private float _yOffset = 1.0f; // インスペクターから高さを調整可能
+        [SerializeField] private float _yOffset = 1.0f; 
 
         /// <summary>
-        /// プレイヤーの初期位置や既存のアイテム・敵を除いた空きタイルに敵を生成する
+        /// 空きタイルに敵を生成し、実際に生成された数を返す
         /// </summary>
-        public void SpawnEnemies(MapManager mapManager, int count, Vector2Int playerSpawnPos)
+        /// <returns>生成に成功した敵の数</returns>
+        public int SpawnEnemies(MapManager mapManager, int count, Vector2Int playerSpawnPos)
         {
             if (_enemyPrefab == null)
             {
                 CusLog.Error("[EnemySpawner] EnemyPrefab が設定されていません。");
-                return;
+                return 0;
             }
 
-            // MapManager 側の修正により、ここですでに「アイテムあり」や「敵あり」のタイルが除外される
+            // 空きタイルのリストを取得
             List<TileData> emptyTiles = mapManager.GetWalkableEmptyTiles(playerSpawnPos);
 
             // 生成数が候補数を超えないように調整
             int spawnCount = Mathf.Min(count, emptyTiles.Count);
+            
+            // ★追加：実際に生成に成功した数をカウントする
+            int actualSuccessCount = 0;
 
-            // リストをフィッシャー・イェーツの手法でシャッフル（ランダム抽出）
+            // リストをシャッフル（ランダム抽出）
             for (int i = 0; i < emptyTiles.Count; i++)
             {
                 TileData temp = emptyTiles[i];
@@ -46,23 +50,32 @@ namespace TechC.InGame.Enemy
                 TileData targetTile = emptyTiles[i];
                 Vector3 tilePos = targetTile.TileObject.transform.position;
 
-                // めり込み防止のオフセットを適用
+                // オフセット適用
                 Vector3 spawnPos = new Vector3(tilePos.x, tilePos.y + _yOffset, tilePos.z);
 
                 GameObject enemyObj = Instantiate(_enemyPrefab, spawnPos, Quaternion.identity, _enemyParent);
 
-                // 敵データにグリッド座標を教える
+                // 敵データにグリッド座標をセット
                 EnemyDataOnTile enemyData = enemyObj.GetComponent<EnemyDataOnTile>();
                 if (enemyData != null)
                 {
                     enemyData.Setup(targetTile.GridPosition);
+                    // タイル側の名簿に敵を登録
+                    targetTile.EnemyObject = enemyData;
+                    
+                    // 生成成功カウントを加算
+                    actualSuccessCount++;
                 }
-
-                // タイル側の名簿に敵を登録
-                targetTile.EnemyObject = enemyData;
+                else
+                {
+                    CusLog.Warning($"[EnemySpawner] 生成されたオブジェクトに EnemyDataOnTile が付与されていません。");
+                }
             }
 
-            CusLog.Log($"[EnemySpawner] {spawnCount} 体の敵を配置しました。(PlayerPos {playerSpawnPos} とアイテム位置を除外)");
+            CusLog.Log($"[EnemySpawner] {actualSuccessCount} 体の敵を配置しました。");
+            
+            // ★重要：呼び出し元の MapGenerator に実数を報告する
+            return actualSuccessCount;
         }
     }
 }

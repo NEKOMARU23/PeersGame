@@ -20,24 +20,13 @@ namespace TechC.InGame.Map
 
         public MapManager Generate()
         {
-            if (_mapData == null)
+            if (_mapData == null || _mapData.TilePrefab == null || _tileParent == null)
             {
-                CusLog.Error("[MapGenerator] MapDataSO がアサインされていません。");
+                CusLog.Error("[MapGenerator] 必要な参照がアサインされていません。");
                 return null;
             }
 
-            if (_mapData.TilePrefab == null)
-            {
-                CusLog.Error("[MapGenerator] TilePrefab がアサインされていません。");
-                return null;
-            }
-
-            if (_tileParent == null)
-            {
-                CusLog.Error("[MapGenerator] TileParent がアサインされていません。");
-                return null;
-            }
-
+            // 既存タイルのクリア
             for (int i = _tileParent.childCount - 1; i >= 0; i--)
             {
                 Destroy(_tileParent.GetChild(i).gameObject);
@@ -48,6 +37,7 @@ namespace TechC.InGame.Map
             float offsetX = (_mapData.Columns - 1) * _mapData.TileSpacing / HalfDivider;
             float offsetZ = (_mapData.Rows - 1) * _mapData.TileSpacing / HalfDivider;
 
+            // タイルの生成
             for (int row = 0; row < _mapData.Rows; row++)
             {
                 for (int col = 0; col < _mapData.Columns; col++)
@@ -59,12 +49,7 @@ namespace TechC.InGame.Map
                         row * _mapData.TileSpacing - offsetZ
                     );
 
-                    var tileObject = Instantiate(
-                        _mapData.TilePrefab,
-                        worldPos,
-                        Quaternion.identity,
-                        _tileParent
-                    );
+                    var tileObject = Instantiate(_mapData.TilePrefab, worldPos, Quaternion.identity, _tileParent);
                     tileObject.name = $"Tile({col},{row})";
 
                     var tileData = new TileData(gridPos, tileObject);
@@ -72,13 +57,16 @@ namespace TechC.InGame.Map
                 }
             }
 
+            // 敵の生成
             if (_enemySpawner != null)
             {
-                _enemySpawner.SpawnEnemies(mapManager, _enemySpawnCount, _playerInitialGridPos);
-            }
-            else
-            {
-                CusLog.Warning("[MapGenerator] EnemySpawner がアサインされていないため、敵を生成できませんでした。");
+                // ★修正ポイント：Spawnerに「実際に生成した数」を返してもらうようにする
+                int actualSpawnedCount = _enemySpawner.SpawnEnemies(mapManager, _enemySpawnCount, _playerInitialGridPos);
+
+                // Spawnerから返ってきた確実な数をMapManagerにセット
+                mapManager.AddEnemyCount(actualSpawnedCount);
+
+                CusLog.Log($"[MapGenerator] 生成完了。MapManager登録数: {mapManager.GetEnemyCount()}");
             }
 
             return mapManager;

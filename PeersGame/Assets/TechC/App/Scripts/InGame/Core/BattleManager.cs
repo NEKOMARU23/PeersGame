@@ -1,14 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // TextMeshProを使用する場合
+using TMPro;
 using TechC.InGame.Log;
 using TechC.InGame.Enemy;
 using TechC.InGame.Player;
 using TechC.InGame.Notes;
+using TechC.Scene.Manager;
 using UnityEngine.InputSystem;
 
 namespace TechC.InGame.Core
 {
+    /// <summary>
+    /// 戦闘シーンの進行とクリア判定を管理するクラス
+    /// </summary>
     public class BattleManager : MonoBehaviour
     {
         public static BattleManager I { get; private set; }
@@ -21,7 +25,7 @@ namespace TechC.InGame.Core
         [SerializeField] private Image _battleEnemyImage;
         [SerializeField] private GameObject _noteSystemRoot;
         
-        // ★追加：ガイダンス用テキスト
+        [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI _guidanceText; 
 
         private EnemyDataOnTile _currentEnemy;
@@ -39,20 +43,17 @@ namespace TechC.InGame.Core
         {
             if (!_isBattleActive) return;
 
-            // 音楽が再生されていない＝入力待ち状態
+            // 音楽が再生されていない ＝ 入力待ち状態
             if (MusicGameManager.I != null && !MusicGameManager.I.IsPlaying)
             {
                 if (GetStartInput())
                 {
-                    SetGuidance(""); // ★リズムゲーム開始時にテキストを消す
+                    SetGuidance(""); 
                     MusicGameManager.I.PlayMusic();
                 }
             }
         }
 
-        /// <summary>
-        /// ガイダンステキストを書き換える
-        /// </summary>
         private void SetGuidance(string message)
         {
             if (_guidanceText != null)
@@ -65,19 +66,29 @@ namespace TechC.InGame.Core
         {
             if (MusicGameManager.I != null) MusicGameManager.I.StopMusic();
 
-            // 判定処理（省略せずそのまま残してください）
-            if (attackSuccess && _currentEnemy != null) _currentEnemy.RequestDamage(1); 
-            if (!defenseSuccess && PlayerController.I != null) PlayerController.I.TakeDamage(1);
+            if (attackSuccess && _currentEnemy != null)
+            {
+                _currentEnemy.RequestDamage(1); 
+            }
 
+            if (!defenseSuccess && PlayerController.I != null)
+            {
+                PlayerController.I.TakeDamage(1);
+            }
+
+            // 敵が生きているかどうかの判定
             if (_currentEnemy != null && _currentEnemy.IsAlive()) 
             {
-                // ★フレーズ終了後に再度テキストを表示
-                SetGuidance("SPACE KEY TO NEXT TURN");
+                SetGuidance("PRESS SPACE TO NEXT TURN");
                 
-                if (NoteSpawner.I != null) NoteSpawner.I.PrepareNextLoop();
+                if (NoteSpawner.I != null)
+                {
+                    NoteSpawner.I.PrepareNextLoop();
+                }
             }
             else
             {
+                // 敵が死亡した、または存在しない場合は戦闘終了
                 EndBattle(true);
             }
         }
@@ -93,15 +104,14 @@ namespace TechC.InGame.Core
             _battleView.SetActive(true);
             if (_noteSystemRoot != null) _noteSystemRoot.SetActive(true);
 
-            // ★戦闘開始時のメッセージ
             SetGuidance("PRESS SPACE TO START");
 
-            // （画像反映や移動停止の処理はそのまま）
             if (_battleEnemyImage != null && enemy != null)
             {
                 var enemyRenderer = enemy.GetComponentInChildren<SpriteRenderer>();
                 if (enemyRenderer != null) _battleEnemyImage.sprite = enemyRenderer.sprite;
             }
+
             if (NoteSpawner.I != null) NoteSpawner.I.ResetSpawner();
             if (PlayerMover.I != null) PlayerMover.I.enabled = false;
         }
@@ -109,15 +119,48 @@ namespace TechC.InGame.Core
         public void EndBattle(bool isVictory)
         {
             _isBattleActive = false;
-            SetGuidance(""); // 終了時は消す
+            SetGuidance(""); 
             
             if (MusicGameManager.I != null) MusicGameManager.I.StopMusic();
             if (NoteSpawner.I != null) NoteSpawner.I.ResetSpawner();
 
+            if (isVictory && _currentEnemy != null)
+            {
+                // 1. マップデータから削除（MapManager内部のカウントが減る）
+                var mapManager = InGame.Core.InGameManager.I.MapManager;
+                
+                // 削除前のカウントをログ出力（デバッグ用）
+                int beforeCount = mapManager.GetEnemyCount();
+                
+                mapManager.RemoveEnemyAt(_currentEnemy.GridPosition);
+
+                // 2. クリア判定
+                int remaining = mapManager.GetEnemyCount();
+                
+                CusLog.Log($"[BattleEnd] 敵を撃破。削除前:{beforeCount} -> 残り:{remaining}");
+
+                if (remaining <= 0)
+                {
+                    CusLog.Log("★全滅を確認しました。タイトルシーンへ遷移します。");
+                    if (SceneController.I != null)
+                    {
+                        SceneController.I.ChangeToTitleScene();
+                    }
+                    else
+                    {
+                        CusLog.Error("SceneControllerが見つかりません。");
+                    }
+                    return; // シーン遷移するのでここで終了
+                }
+            }
+
+            // まだ敵が残っている、または敗北した場合はフィールドへ戻る
+            CusLog.Log("フィールドへ戻ります。");
             _fieldView.SetActive(true);
             _battleView.SetActive(false);
             if (_noteSystemRoot != null) _noteSystemRoot.SetActive(false);
             if (PlayerMover.I != null) PlayerMover.I.enabled = true;
+
             _currentEnemy = null;
         }
 

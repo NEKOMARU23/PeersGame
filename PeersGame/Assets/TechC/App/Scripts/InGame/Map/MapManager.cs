@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TechC.InGame.Enemy;
+using TechC.InGame.Log;
 
 namespace TechC.InGame.Map
 {
@@ -10,6 +11,9 @@ namespace TechC.InGame.Map
     public class MapManager
     {
         private readonly TileData[,] _tiles;
+        
+        // ★重要：初期値は0。MapGeneratorから確定した数をAddEnemyCountで受け取る。
+        private int _currentEnemyCount = 0;
 
         /// <summary>縦のマス数</summary>
         public int Rows { get; }
@@ -17,7 +21,6 @@ namespace TechC.InGame.Map
         /// <summary>横のマス数</summary>
         public int Columns { get; }
 
-        /// <summary>マップのサイズを指定して初期化する</summary>
         public MapManager(int rows, int columns)
         {
             Rows = rows;
@@ -26,17 +29,34 @@ namespace TechC.InGame.Map
         }
 
         /// <summary>
-        /// タイルを登録する（MapGeneratorから呼ばれる）
+        /// タイルを登録する
         /// </summary>
         public void RegisterTile(TileData tileData)
         {
             var pos = tileData.GridPosition;
             _tiles[pos.y, pos.x] = tileData;
+            
+            // ★修正：ここでの自動カウントを廃止。
+            // 生成タイミングの前後によりカウント漏れが起きるのを防ぐため。
         }
 
         /// <summary>
-        /// 指定座標にタイルが存在し、かつ歩行可能かどうかを返す
+        /// 現在マップに残っている敵の総数を取得する
         /// </summary>
+        public int GetEnemyCount()
+        {
+            return _currentEnemyCount;
+        }
+
+        /// <summary>
+        /// 敵の初期数を設定、または追加する
+        /// </summary>
+        public void AddEnemyCount(int amount)
+        {
+            _currentEnemyCount += amount;
+            CusLog.Log($"[MapManager] 敵カウントを更新しました。現在の総数: {_currentEnemyCount}");
+        }
+
         public bool IsValidPosition(Vector2Int pos)
         {
             if (pos.x < 0 || pos.x >= Columns) return false;
@@ -46,28 +66,18 @@ namespace TechC.InGame.Map
             return tile != null && tile.IsWalkable;
         }
 
-        /// <summary>
-        /// 指定座標のTileDataを取得する
-        /// </summary>
         public TileData GetTile(Vector2Int pos)
         {
             if (!IsValidPosition(pos)) return null;
             return _tiles[pos.y, pos.x];
         }
 
-        /// <summary>
-        /// 指定座標に敵がいるかどうかを返す
-        /// </summary>
         public EnemyDataOnTile GetEnemyAt(Vector2Int pos)
         {
             var tile = GetTile(pos);
             return tile?.EnemyObject;
         }
 
-        /// <summary>
-        /// プレイヤー、アイテム、敵のいずれも存在しない「完全な空きタイル」のリストを取得する
-        /// </summary>
-        /// <param name="playerPos">除外したいプレイヤーの現在座標</param>
         public List<TileData> GetWalkableEmptyTiles(Vector2Int playerPos)
         {
             var walkableEmptyTiles = new List<TileData>();
@@ -77,38 +87,34 @@ namespace TechC.InGame.Map
                 for (int x = 0; x < Columns; x++)
                 {
                     var tile = _tiles[y, x];
-
-                    // 基本チェック
-                    if (tile == null) continue;
-                    if (!tile.IsWalkable) continue;
-
-                    // オブジェクト重複チェック
-                    if (tile.IsItem) continue;           // アイテムがある場合はスキップ
-                    if (tile.EnemyObject != null) continue; // 敵がある場合はスキップ
-
-                    // プレイヤー座標チェック
+                    if (tile == null || !tile.IsWalkable || tile.IsItem || tile.EnemyObject != null) continue;
                     if (x == playerPos.x && y == playerPos.y) continue;
 
                     walkableEmptyTiles.Add(tile);
                 }
             }
-
             return walkableEmptyTiles;
         }
 
         /// <summary>
-        /// 指定座標の敵を削除し、タイルの情報をクリアする
+        /// 敵を削除し、カウントを減らす。
         /// </summary>
-        /// <param name="pos">消去したい敵のグリッド座標</param>
         public void RemoveEnemyAt(Vector2Int pos)
         {
             TileData tile = GetTile(pos);
 
             if (tile != null && tile.EnemyObject != null)
             {
+                // ★カウントを減らす。
+                _currentEnemyCount--;
+                CusLog.Log($"[MapManager] 敵を削除。残り敵数: {_currentEnemyCount}");
+                
                 Object.Destroy(tile.EnemyObject.gameObject);
-
                 tile.EnemyObject = null;
+            }
+            else
+            {
+                CusLog.Warning($"[MapManager] 指定座標 {pos} に削除すべき敵がいません。");
             }
         }
     }
