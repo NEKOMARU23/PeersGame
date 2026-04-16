@@ -97,7 +97,8 @@ namespace TechC.InGame.Player
             if (enemy != null)
             {
                 CusLog.Log($"[Encounter] 敵と遭遇！ 戦闘開始 (座標: {nextPos})");
-                
+
+                enemy.OnPlayerEnter();
                 if (BattleManager.I != null)
                 {
                     BattleManager.I.StartBattle(enemy);

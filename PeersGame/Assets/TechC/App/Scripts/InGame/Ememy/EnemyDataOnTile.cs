@@ -6,13 +6,11 @@ namespace TechC.InGame.Enemy
     public class EnemyDataOnTile : MonoBehaviour
     {
         public Vector2Int GridPosition { get; private set; }
-
         private EnemyController _controller;
 
         public void Setup(Vector2Int pos)
         {
             GridPosition = pos;
-
             _controller = GetComponent<EnemyController>();
             if (_controller != null)
             {
@@ -20,26 +18,28 @@ namespace TechC.InGame.Enemy
             }
         }
 
-        public void RequestDamage(int damage)
+        public void OnPlayerEnter()
         {
+            CusLog.Log($"[TileLog] {gameObject.name}: プレイヤーがタイルに進入しました。(座標: {GridPosition})");
+            
             if (_controller != null)
             {
-                _controller.TakeDamage(damage);
+                _controller.ShowHealthUI();
             }
+            else
+            {
+                Debug.LogError($"[TileLog] {gameObject.name}: EnemyControllerが見つかりません！");
+            }
+        }
+
+        public void RequestDamage(int damage)
+        {
+            if (_controller != null) _controller.TakeDamage(damage);
         }
 
         public bool IsAlive()
         {
-            if (_controller != null)
-            {
-                return _controller.GetCurrentHp() > 0;
-            }
-            return false;
-        }
-
-        public void OnPlayerEnter()
-        {
-            CusLog.Log($"敵と遭遇！座標: {GridPosition}");
+            return _controller != null && _controller.GetCurrentHp() > 0;
         }
     }
 }
