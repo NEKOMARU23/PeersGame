@@ -11,20 +11,25 @@ namespace TechC.InGame.Notes
 {
     public class NoteSpawner : Singleton<NoteSpawner>
     {
+        [Header("Note Prefabs")]
         [SerializeField] private List<NoteData> _notes;
         [SerializeField] private GameObject _attackNotePrefab;
         [SerializeField] private GameObject _defenseNotePrefab;
+
+        [Header("Spawn Settings")]
+        // ★追加：ノーツが出現する基準位置。インスペクターのここをいじればノーツの位置が変わります。
+        [SerializeField] private Transform _spawnPoint; 
+
+        [Header("Judge Thresholds (Beats)")]
+        [SerializeField] private float _perfectThreshold = 0.1f;
+        [SerializeField] private float _greatThreshold = 0.2f;
+        [SerializeField] private float _missThreshold = 0.35f;
 
         private List<NoteController> _activeNoteList = new List<NoteController>();
         private int _index = 0;
 
         private int _successAttackCount = 0;
         private int _successDefenseCount = 0;
-
-        [Header("Judge Thresholds (Beats)")]
-        [SerializeField] private float _perfectThreshold = 0.1f;
-        [SerializeField] private float _greatThreshold = 0.2f;
-        [SerializeField] private float _missThreshold = 0.35f;
 
         protected override bool UseDontDestroyOnLoad => false;
         protected override bool DestroyTargetGameObject => true;
@@ -108,25 +113,18 @@ namespace TechC.InGame.Notes
                 BattleManager.I.OnPhraseResolved(attackSuccess, defenseSuccess);
             }
 
-            // 成功カウントのリセット
             _successAttackCount = 0;
             _successDefenseCount = 0;
         }
 
-        /// <summary>
-        /// 譜面の進行度のみをリセットし、次のターンへの準備を行う
-        /// </summary>
         public void PrepareNextLoop()
         {
             _index = 0;
-            
-            // 画面に残っているノーツをクリア
             foreach (var note in _activeNoteList)
             {
                 if (note != null) note.gameObject.SetActive(false);
             }
             _activeNoteList.Clear();
-
             CusLog.Log("NoteSpawner: 次のターンの準備が完了しました。");
         }
 
@@ -134,6 +132,19 @@ namespace TechC.InGame.Notes
         {
             GameObject prefab = (data.Type == NoteType.Attack) ? _attackNotePrefab : _defenseNotePrefab;
             GameObject obj = ObjectPoolManager.Instance.GetObject(prefab);
+
+            // ★修正ポイント：生成（プールから取得）した瞬間に、指定した座標へ移動させる
+            if (_spawnPoint != null)
+            {
+                obj.transform.position = _spawnPoint.position;
+                obj.transform.rotation = _spawnPoint.rotation;
+            }
+            else
+            {
+                // SpawnPointが未設定の場合はSpawner自身の位置に出す
+                obj.transform.position = transform.position;
+            }
+
             var controller = obj.GetComponent<NoteController>();
             controller.Initialize(data);
             _activeNoteList.Add(controller);
@@ -150,7 +161,6 @@ namespace TechC.InGame.Notes
                 if (note != null) note.gameObject.SetActive(false);
             }
             _activeNoteList.Clear();
-            
             CusLog.Log("NoteSpawner: 完全リセット完了。");
         }
     }
