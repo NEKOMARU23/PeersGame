@@ -28,13 +28,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7386204500267746381}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 2, z: -5.18}
+  m_LocalRotation: {x: 0.53729963, y: 0, z: 0, w: 0.8433915}
+  m_LocalPosition: {x: 1, y: 2, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 65, y: 0, z: 0}
 --- !u!33 &1314810771279868104
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -125,10 +125,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecdc12704ed0fdd47ac637763fb79a3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Notes.NoteController
-  _judgeX: 0
-  _startX: 10
-  _perfectRange: 0.2
-  _goodRange: 0.5
+  _judgeX: -2
   _effectPool: {fileID: 4996715023264181063, guid: c0afb2bdfd783ee49b597e165241e419, type: 3}
   _attackEffect: {fileID: 0}
-  _deffenceEffct: {fileID: 0}
+  _defenseEffect: {fileID: 0}
