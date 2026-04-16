@@ -32,6 +32,8 @@ namespace TechC.InGame.Player
         public void TakeDamage(int damage)
         {
             _currentHp -= damage;
+
+            CusLog.Log($"プレイヤーがダメージを受けた！ 残りHP: {_currentHp}");
             UpdateHpUI();
             if (_currentHp <= 0)
             {

@@ -15,11 +15,9 @@ namespace TechC.InGame.Notes
         [SerializeField] private GameObject _attackNotePrefab;
         [SerializeField] private GameObject _defenseNotePrefab;
 
-        // ★管理用のリストとインデックス
         private List<NoteController> _activeNoteList = new List<NoteController>();
         private int _index = 0;
 
-        // ★【追加】成功数をカウントする変数
         private int _successAttackCount = 0;
         private int _successDefenseCount = 0;
 
@@ -37,20 +35,17 @@ namespace TechC.InGame.Notes
 
             float currentBeat = BeatTimer.Instance.GetCurrentBeat();
 
-            // 1. ノーツの生成処理
             while (_index < _notes.Count && _notes[_index].SpawnBeat <= currentBeat)
             {
                 SpawnNote(_notes[_index]);
                 _index++;
             }
 
-            // 2. 入力検知と判定処理
             if (GetActionInput())
             {
                 JudgeClosestNote(currentBeat);
             }
 
-            // 3. 通り過ぎたノーツの自動Missチェック
             CheckAutoMiss(currentBeat);
         }
 
@@ -89,7 +84,6 @@ namespace TechC.InGame.Notes
         {
             if (note == null || BeatTimer.Instance == null) return;
 
-            // ★成功判定ならカウンターを増やす
             bool isSuccess = (rating == "Perfect" || rating == "Great" || rating == "Good");
             if (isSuccess)
             {
@@ -97,9 +91,8 @@ namespace TechC.InGame.Notes
                 else _successDefenseCount++;
             }
 
-            CusLog.Log($"[Judge] {rating}! (Attack:{_successAttackCount} Defense:{_successDefenseCount})");
+            CusLog.Log($"[Judge] {rating}! (Atk:{_successAttackCount} Def:{_successDefenseCount})");
 
-            // ★精算トリガーのチェック
             if (note.Data.IsResolutionTrigger)
             {
                 ResolvePhrase();
@@ -110,35 +103,22 @@ namespace TechC.InGame.Notes
         }
 
         /// <summary>
-        /// ★フレーズの区切りで成否を判定し、アクションを実行する
+        /// フレーズの精算結果を決定し、BattleManagerへ報告する
         /// </summary>
         private void ResolvePhrase()
         {
-            CusLog.Log($"<color=yellow>[Phrase Resolve]</color> Final Counts -> Attack: {_successAttackCount}, Defense: {_successDefenseCount}");
+            bool attackSuccess = (_successAttackCount >= 5);
+            bool defenseSuccess = (_successDefenseCount >= 5);
 
-            // 攻撃の判定（5個以上で成功）
-            if (_successAttackCount >= 5)
+            CusLog.Log($"<color=yellow>[Phrase Resolve]</color> Attack:{attackSuccess} Defense:{defenseSuccess}");
+
+            // ★BattleManagerへ結果を送る
+            if (BattleManager.I != null)
             {
-                CusLog.Log("<color=cyan>【攻撃成功】敵にダメージ！</color>");
-                // BattleManager.I.EnemyTakeDamage(10); // 今後実装
-            }
-            else
-            {
-                CusLog.Log("<color=white>【攻撃失敗】手数が足りない...</color>");
+                BattleManager.I.OnPhraseResolved(attackSuccess, defenseSuccess);
             }
 
-            // 防御の判定（5個以上で成功）
-            if (_successDefenseCount >= 5)
-            {
-                CusLog.Log("<color=green>【防御成功】ノーダメージ！</color>");
-            }
-            else
-            {
-                CusLog.Log("<color=red>【防御失敗】敵の攻撃を受けた！</color>");
-                // BattleManager.I.PlayerTakeDamage(10); // 今後実装
-            }
-
-            // ★カウンターをリセットして次のフレーズへ
+            // 次のフレーズのためにリセット
             _successAttackCount = 0;
             _successDefenseCount = 0;
         }
@@ -167,7 +147,7 @@ namespace TechC.InGame.Notes
             var children = GetComponentsInChildren<NoteController>();
             foreach (var child in children) child.gameObject.SetActive(false);
 
-            CusLog.Log("NoteSpawner: リセット完了（カウンターも0にしました）");
+            CusLog.Log("NoteSpawner: Reset Completed.");
         }
     }
 }

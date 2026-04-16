@@ -1,5 +1,5 @@
-using TechC.InGame.Log;
 using UnityEngine;
+using TechC.InGame.Log;
 
 namespace TechC.InGame.Enemy
 {
@@ -7,15 +7,26 @@ namespace TechC.InGame.Enemy
     {
         public Vector2Int GridPosition { get; private set; }
         
-        [SerializeField] private int _maxHp = 3;
-        private int _currentHp;
+        private EnemyController _controller;
 
         public void Setup(Vector2Int pos)
         {
             GridPosition = pos;
-            _currentHp = _maxHp;
+
+            _controller = GetComponent<EnemyController>();
+            if (_controller != null)
+            {
+                _controller.Initialize();
+            }
         }
 
+        public void RequestDamage(int damage)
+        {
+            if (_controller != null)
+            {
+                _controller.TakeDamage(damage);
+            }
+        }
 
         public void OnPlayerEnter()
         {

@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TechC.InGame.Log;
 using TechC.InGame.Enemy;
 using TechC.InGame.Player;
-using TechC.InGame.Notes; // NoteSpawnerにアクセスするために追加
+using TechC.InGame.Notes;
 
 namespace TechC.InGame.Core
 {
@@ -31,8 +31,27 @@ namespace TechC.InGame.Core
         }
 
         /// <summary>
-        /// 戦闘開始
+        /// NoteSpawner からフレーズ終了時に呼ばれる
         /// </summary>
+        public void OnPhraseResolved(bool attackSuccess, bool defenseSuccess)
+        {
+            if (attackSuccess)
+            {
+                if (_currentEnemy != null)
+                {
+                    _currentEnemy.RequestDamage(1); 
+                }
+            }
+
+            if (!defenseSuccess)
+            {
+                if (PlayerController.I != null)
+                {
+                    PlayerController.I.TakeDamage(1);
+                }
+            }
+        }
+
         public void StartBattle(EnemyDataOnTile enemy)
         {
             _currentEnemy = enemy;
@@ -56,7 +75,6 @@ namespace TechC.InGame.Core
 
                 if (MusicGameManager.I != null)
                 {
-                    // 再生命令（この中で NoteSpawner の index リセットが走る）
                     MusicGameManager.I.PlayMusic(); 
                 }
             }
@@ -64,15 +82,10 @@ namespace TechC.InGame.Core
             if (PlayerMover.I != null) PlayerMover.I.enabled = false;
         }
 
-        /// <summary>
-        /// 戦闘終了
-        /// </summary>
         public void EndBattle(bool isVictory)
         {
             CusLog.Log($"[BattleManager] 戦闘終了: 勝利={isVictory}");
 
-            // ★追加：戦闘が終わったので、今出ているノーツをお片付け（回収）する
-            // NoteSpawner側もシンプルなシングルトン(public static NoteSpawner I)であることを想定
             if (NoteSpawner.I != null)
             {
                 NoteSpawner.I.ResetSpawner();
@@ -86,9 +99,7 @@ namespace TechC.InGame.Core
 
             _fieldView.SetActive(true);
             _battleView.SetActive(false);
-
             if (_noteSystemRoot != null) _noteSystemRoot.SetActive(false);
-
             if (PlayerMover.I != null) PlayerMover.I.enabled = true;
 
             _currentEnemy = null;
