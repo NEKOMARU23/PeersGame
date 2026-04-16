@@ -27,7 +27,7 @@ namespace TechC.InGame.Enemy
 
             // MapManager 側の修正により、ここですでに「アイテムあり」や「敵あり」のタイルが除外される
             List<TileData> emptyTiles = mapManager.GetWalkableEmptyTiles(playerSpawnPos);
-            
+
             // 生成数が候補数を超えないように調整
             int spawnCount = Mathf.Min(count, emptyTiles.Count);
 
@@ -45,12 +45,12 @@ namespace TechC.InGame.Enemy
             {
                 TileData targetTile = emptyTiles[i];
                 Vector3 tilePos = targetTile.TileObject.transform.position;
-                
+
                 // めり込み防止のオフセットを適用
                 Vector3 spawnPos = new Vector3(tilePos.x, tilePos.y + _yOffset, tilePos.z);
-                
+
                 GameObject enemyObj = Instantiate(_enemyPrefab, spawnPos, Quaternion.identity, _enemyParent);
-                
+
                 // 敵データにグリッド座標を教える
                 EnemyDataOnTile enemyData = enemyObj.GetComponent<EnemyDataOnTile>();
                 if (enemyData != null)

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5569830360668022552}
   - component: {fileID: 8602168658607772631}
   - component: {fileID: 1737051527559629729}
+  - component: {fileID: -8400842255630221360}
   m_Layer: 0
   m_Name: TestEnemy
   m_TagString: Untagged
@@ -125,4 +126,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a341bda5656ebc49860af21cacba924, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Enemy.EnemyDataOnTile
+--- !u!114 &-8400842255630221360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9149981338472342101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db48ab6060e34bd44a0bc0dd739486fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TechC.InGame.Enemy.EnemyController
   _maxHp: 3

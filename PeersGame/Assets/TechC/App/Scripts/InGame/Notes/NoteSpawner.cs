@@ -53,9 +53,7 @@ namespace TechC.InGame.Notes
         {
             var kb = Keyboard.current;
             var mouse = Mouse.current;
-            bool spacePressed = kb != null && kb.spaceKey.wasPressedThisFrame;
-            bool leftClickPressed = mouse != null && mouse.leftButton.wasPressedThisFrame;
-            return spacePressed || leftClickPressed;
+            return (kb != null && kb.spaceKey.wasPressedThisFrame) || (mouse != null && mouse.leftButton.wasPressedThisFrame);
         }
 
         private void JudgeClosestNote(float currentBeat)
@@ -82,7 +80,7 @@ namespace TechC.InGame.Notes
 
         private void ExecuteJudge(NoteController note, string rating)
         {
-            if (note == null || BeatTimer.Instance == null) return;
+            if (note == null) return;
 
             bool isSuccess = (rating == "Perfect" || rating == "Great" || rating == "Good");
             if (isSuccess)
@@ -90,8 +88,6 @@ namespace TechC.InGame.Notes
                 if (note.Data.Type == NoteType.Attack) _successAttackCount++;
                 else _successDefenseCount++;
             }
-
-            CusLog.Log($"[Judge] {rating}! (Atk:{_successAttackCount} Def:{_successDefenseCount})");
 
             if (note.Data.IsResolutionTrigger)
             {
@@ -102,25 +98,36 @@ namespace TechC.InGame.Notes
             _activeNoteList.Remove(note);
         }
 
-        /// <summary>
-        /// フレーズの精算結果を決定し、BattleManagerへ報告する
-        /// </summary>
         private void ResolvePhrase()
         {
             bool attackSuccess = (_successAttackCount >= 5);
             bool defenseSuccess = (_successDefenseCount >= 5);
 
-            CusLog.Log($"<color=yellow>[Phrase Resolve]</color> Attack:{attackSuccess} Defense:{defenseSuccess}");
-
-            // ★BattleManagerへ結果を送る
             if (BattleManager.I != null)
             {
                 BattleManager.I.OnPhraseResolved(attackSuccess, defenseSuccess);
             }
 
-            // 次のフレーズのためにリセット
+            // 成功カウントのリセット
             _successAttackCount = 0;
             _successDefenseCount = 0;
+        }
+
+        /// <summary>
+        /// 譜面の進行度のみをリセットし、次のターンへの準備を行う
+        /// </summary>
+        public void PrepareNextLoop()
+        {
+            _index = 0;
+            
+            // 画面に残っているノーツをクリア
+            foreach (var note in _activeNoteList)
+            {
+                if (note != null) note.gameObject.SetActive(false);
+            }
+            _activeNoteList.Clear();
+
+            CusLog.Log("NoteSpawner: 次のターンの準備が完了しました。");
         }
 
         private void SpawnNote(NoteData data)
@@ -143,11 +150,8 @@ namespace TechC.InGame.Notes
                 if (note != null) note.gameObject.SetActive(false);
             }
             _activeNoteList.Clear();
-
-            var children = GetComponentsInChildren<NoteController>();
-            foreach (var child in children) child.gameObject.SetActive(false);
-
-            CusLog.Log("NoteSpawner: Reset Completed.");
+            
+            CusLog.Log("NoteSpawner: 完全リセット完了。");
         }
     }
 }

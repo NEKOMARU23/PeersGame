@@ -10,12 +10,14 @@ namespace TechC.InGame.Enemy
     {
         [SerializeField] private int _maxHp = 3;
         private int _currentHp;
+        public int GetCurrentHp() => _currentHp;
 
         public void Initialize()
         {
             _currentHp = _maxHp;
             CusLog.Log($"{gameObject.name} が戦闘準備完了。HP: {_currentHp}");
         }
+        
 
         public void TakeDamage(int damage)
         {
